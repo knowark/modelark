@@ -39,17 +39,7 @@ def test_memory_repository_implementation() -> None:
 
 
 @fixture
-def equality_parser():
-    class EqualityParser:
-        def parse(self, domain: Domain) -> Callable[[Domain], bool]:
-            if not len(domain) == 1:
-                return lambda item: True
-            return lambda item: getattr(item, domain[0][0]) == domain[0][2]
-    return EqualityParser()
-
-
-@fixture
-def alpha_memory_repository(equality_parser) -> MemoryRepository[Alpha]:
+def alpha_memory_repository() -> MemoryRepository[Alpha]:
     class AlphaMemoryRepository(MemoryRepository[Alpha]):
         model = Alpha
 
@@ -65,7 +55,7 @@ def alpha_memory_repository(equality_parser) -> MemoryRepository[Alpha]:
 
 
 @fixture
-def beta_memory_repository(equality_parser) -> MemoryRepository[Beta]:
+def beta_memory_repository() -> MemoryRepository[Beta]:
     class BetaMemoryRepository(MemoryRepository[Beta]):
         model = Beta
 
@@ -81,7 +71,7 @@ def beta_memory_repository(equality_parser) -> MemoryRepository[Beta]:
 
 
 @fixture
-def gamma_memory_repository(equality_parser) -> MemoryRepository[Gamma]:
+def gamma_memory_repository() -> MemoryRepository[Gamma]:
     class GammaMemoryRepository(MemoryRepository[Gamma]):
         model = Gamma
 
@@ -97,7 +87,7 @@ def gamma_memory_repository(equality_parser) -> MemoryRepository[Gamma]:
 
 
 @fixture
-def delta_memory_repository(equality_parser) -> MemoryRepository[Delta]:
+def delta_memory_repository() -> MemoryRepository[Delta]:
     class DeltaMemoryRepository(MemoryRepository[Delta]):
         model = Delta
 
