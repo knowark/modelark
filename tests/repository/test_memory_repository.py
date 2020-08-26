@@ -1,8 +1,6 @@
 from asyncio import sleep
 from typing import Callable
 from pytest import fixture, mark, raises
-# from authark.application.domain.common import (
-# QueryParser, StandardTenantProvider, Tenant)
 from modelark.common import Entity, Domain
 from modelark.repository import Repository, MemoryRepository
 
