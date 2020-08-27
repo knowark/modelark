@@ -1,6 +1,7 @@
 from typing import Protocol, Callable, Any
 from ..common import Domain
 
+
 Filter = Callable[[Any], bool]
 
 
