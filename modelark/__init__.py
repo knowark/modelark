@@ -1,5 +1,6 @@
 from .common import Entity
-from .repository import Repository, MemoryRepository
+from .repository import (
+    Repository, MemoryRepository, JsonRepository, SqlRepository)
 
 __author__ = 'Knowark'
 __email__ = 'info@knowark.com'
