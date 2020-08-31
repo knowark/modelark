@@ -148,7 +148,7 @@ async def test_memory_repository_add_update(alpha_memory_repository) -> None:
     updated_entity = Alpha(id="1", field_1="New Value")
     updated_entity, *_ = await alpha_memory_repository.add(updated_entity)
 
-    assert created_entity.created_at == updated_entity.created_at
+    assert created_entity.created_at < updated_entity.created_at
 
     items = alpha_memory_repository.data['default']
     assert len(items) == 3

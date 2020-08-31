@@ -3,30 +3,32 @@ from uuid import uuid4
 from collections import defaultdict
 from typing import List, Tuple, Dict, Generic, Union, Any, overload
 from ..common import (
-    T, R, L, Domain, Locator, DefaultLocator, Filterer, DefaultFilterer)
+    T, R, L, Domain, Locator, DefaultLocator,
+    Filterer, DefaultFilterer, Editor, DefaultEditor)
 from .repository import Repository
 
 
 class MemoryRepository(Repository, Generic[T]):
     def __init__(self, filterer: Filterer = None,
-                 locator: Locator = None) -> None:
+                 locator: Locator = None,
+                 editor: Editor = None) -> None:
         self.data: Dict[str, Dict[str, T]] = defaultdict(dict)
         self.filterer: Filterer = filterer or DefaultFilterer()
         self.locator: Locator = locator or DefaultLocator()
+        self.editor: Editor = editor or DefaultEditor()
         self.max_items = 10_000
 
     async def add(self, item: Union[T, List[T]]) -> List[T]:
         items = item if isinstance(item, list) else [item]
+
         for item in items:
             item.id = item.id or str(uuid4())
             item.updated_at = int(time.time())
-            existing_item = self.data[self._location].get(item.id)
-            if existing_item:
-                item.created_at = existing_item.created_at
-            else:
-                item.created_at = item.updated_at
-
+            item.updated_by = self.editor.reference
+            item.created_at = item.created_at or item.updated_at
+            item.created_by = item.created_by or item.updated_by
             self.data[self._location][item.id] = item
+
         return items
 
     async def remove(self, item: Union[T, List[T]]) -> bool:

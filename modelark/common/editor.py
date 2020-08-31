@@ -4,14 +4,14 @@ from ..common import Domain
 
 class Editor(Protocol):
     @property
-    def user(self) -> str:
-        """Editing user"""
+    def reference(self) -> str:
+        """Editor reference"""
 
 
 class DefaultEditor:
-    def __init__(self, user='') -> None:
-        self._user = user
+    def __init__(self, reference='') -> None:
+        self._reference = reference
 
     @property
-    def user(self) -> str:
-        return self._user
+    def reference(self) -> str:
+        return self._reference

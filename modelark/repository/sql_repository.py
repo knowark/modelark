@@ -32,7 +32,7 @@ class SqlRepository(Repository, Generic[T]):
         for item in items:
             item.id = item.id or str(uuid4())
             item.updated_at = int(time.time())
-            item.updated_by = self.editor.user
+            item.updated_by = self.editor.reference
             item.created_at = item.created_at or item.updated_at
             item.created_by = item.created_by or item.updated_by
             records.append((json.dumps(vars(item)),))

@@ -5,8 +5,8 @@ from json import loads, load, dump
 from uuid import uuid4
 from typing import Dict, List, Tuple, Any, Callable, Generic, Union, overload
 from ..common import (
-    T, R, L, Domain, Filterer, DefaultFilterer, Locator, DefaultLocator
-)
+    T, R, L, Domain, Filterer, DefaultFilterer,
+    Locator, DefaultLocator, Editor, DefaultEditor)
 from .repository import Repository
 
 
@@ -16,12 +16,14 @@ class JsonRepository(Repository, Generic[T]):
                  collection: str,
                  item_class: Callable[..., T],
                  filterer: Filterer = None,
-                 locator: Locator = None) -> None:
+                 locator: Locator = None,
+                 editor: Editor = None) -> None:
         self.data_path = data_path
         self.collection = collection
         self.item_class: Callable[..., T] = item_class
         self.filterer = filterer or DefaultFilterer()
         self.locator = locator or DefaultLocator()
+        self.editor = editor or DefaultEditor()
 
     async def add(self, item: Union[T, List[T]]) -> List[T]:
 
@@ -34,12 +36,12 @@ class JsonRepository(Repository, Generic[T]):
         for item in items:
             item.id = item.id or str(uuid4())
             item.updated_at = int(time.time())
-            if not data[self.collection].get(item.id):
-                item.created_at = item.updated_at
+            item.updated_by = self.editor.reference
+            item.created_at = item.created_at or item.updated_at
+            item.created_by = item.created_by or item.updated_by
 
             data[self.collection][item.id] = vars(item)
 
-        print('FIle path==========', self.file_path)
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         with self.file_path.open('w') as f:
             dump(data, f, indent=2)
