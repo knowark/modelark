@@ -126,4 +126,6 @@ class MemoryRepository(Repository, Generic[T]):
 
     @property
     def _location(self) -> str:
-        return self.locator.location
+        zone = self.locator.zone
+        location = self.locator.location
+        return ":".join(zone and [zone, location] or [location])
