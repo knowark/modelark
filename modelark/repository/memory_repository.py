@@ -78,7 +78,7 @@ class MemoryRepository(Repository, Generic[T]):
 
         items: List[T] = []
         filter_function = self.filterer.parse(domain)
-        for item in list(self.data[self._location].values()):
+        for item in list(self.data.setdefault(self._location, {}).values()):
             if filter_function(item):
                 items.append(item)
 
