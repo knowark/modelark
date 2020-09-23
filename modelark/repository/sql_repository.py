@@ -117,15 +117,18 @@ class SqlRepository(Repository, Generic[T]):
         connection = await self.connector.get(self.locator.zone)
         rows = await connection.fetch(query, *parameters)
 
-        records = [self.constructor(**json.loads(row[self.jsonb_field]))
-                   for row in rows if self.jsonb_field in row]
+        if join:
+            records = []
+            join_constructor = getattr(join, 'constructor')
+            for row in rows:
+                array = [join_constructor(**json.loads(item))
+                         for item in row['array_agg']]
+                records.append((self.constructor(
+                    **json.loads(row[self.jsonb_field])), array))
+            return records
 
-        return records
-
-        # SELECT alphas.data, array_agg(betas.data)
-        # FROM public.alphas LEFT JOIN public.betas
-        # ON betas.data->>'alpha_id' = alphas.data->>'id'
-        # GROUP BY alphas.data
+        return [self.constructor(**json.loads(row[self.jsonb_field]))
+                for row in rows if self.jsonb_field in row]
 
     async def remove(self, item: Union[T, List[T]]) -> bool:
         if not item:

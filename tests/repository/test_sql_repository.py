@@ -1,7 +1,5 @@
 import json
-from textwrap import dedent
 from asyncio import sleep
-from textwrap import dedent
 from inspect import cleandoc
 from typing import Callable, List, Tuple, Dict, Mapping, Any
 from pytest import fixture, mark, raises
@@ -50,7 +48,7 @@ def mock_connector():
             self.execute_result = ''
             self.fetch_query = ''
             self.fetch_args: Tuple = ()
-            self.fetch_result: List[Mapping] = [{}]
+            self.fetch_result: List[Any] = []
             self.data: Dict = {}
 
         async def execute(self, query: str, *args) -> str:
@@ -58,7 +56,7 @@ def mock_connector():
             self.execute_args = args
             return self.execute_result
 
-        async def fetch(self, query: str, *args) -> List[Mapping]:
+        async def fetch(self, query: str, *args) -> List[Any]:
             self.fetch_query = query
             self.fetch_args = args
             return self.fetch_result
@@ -304,22 +302,19 @@ async def test_sql_repository_add_multiple(alpha_sql_repository):
 
 async def test_sql_repository_search_join_one_to_many(
         alpha_sql_repository, beta_sql_repository):
-
-    for parent, children in await alpha_sql_repository.search(
-            [('id', '=', '1')], join=beta_sql_repository):
-        pass
-        # assert isinstance(parent, Alpha)
-        # assert len(children) == 2
-        # assert all(isinstance(beta, Beta) for beta in children)
+    alpha_sql_repository.connector.connection.fetch_result = [
+        {'data': '{"id": "1", "field_1": "value_1"}',
+         'array_agg': ['{"id": "1", "alpha_id": "1"}',
+                       '{"id": "2", "alpha_id": "1"}']}
+    ]
 
     connection = alpha_sql_repository.connector.connection
 
-    # assert cleandoc(connection.fetch_query) == cleandoc(
-        # "SELECT alphas.data, array_agg(betas.data)\n"
-        # "FROM public.alphas LEFT JOIN public.betas\n"
-        # "ON betas.data->>'alpha_id' = alphas.data->>'id'\n"
-        # "GROUP BY alphas.data\n\n"
-        # "WHERE id = ANY(ARRAY['1'])")
+    for parent, children in await alpha_sql_repository.search(
+            [('id', '=', '1')], join=beta_sql_repository):
+        assert isinstance(parent, Alpha)
+        assert len(children) == 2
+        assert all(isinstance(beta, Beta) for beta in children)
 
     assert cleandoc(connection.fetch_query) == cleandoc("""\
         SELECT alphas.data, array_agg(betas.data)
