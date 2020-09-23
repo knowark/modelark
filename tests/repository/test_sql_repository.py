@@ -353,18 +353,34 @@ async def test_sql_repository_search_join_many_to_one(
         GROUP BY betas.data
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
-# async def test_sql_repository_search_join_many_to_many(
-    # alpha_sql_repository, gamma_sql_repository,
-    # delta_sql_repository):
 
-    # for alpha, gammas in await alpha_sql_repository.search(
-    # [('id', '=', '1')], join=gamma_sql_repository,
-    # link=delta_sql_repository):
+async def test_sql_repository_search_join_many_to_many(
+        alpha_sql_repository, gamma_sql_repository, delta_sql_repository):
 
-    # assert isinstance(alpha, Alpha)
-    # assert len(gammas) == 2
-    # assert gammas[0].id == '1'
-    # assert gammas[1].id == '2'
+    alpha_sql_repository.connector.connection.fetch_result = [
+        {'data': '{"id": "1", "alpha_id": "1"}',
+         'array_agg': ['{"id": "1"}', '{"id": "2"}']}
+    ]
+
+    connection = alpha_sql_repository.connector.connection
+    for alpha, gammas in await alpha_sql_repository.search(
+        [('id', '=', '1')], join=gamma_sql_repository,
+            link=delta_sql_repository):
+
+        assert isinstance(alpha, Alpha)
+        assert len(gammas) == 2
+        assert gammas[0].id == '1'
+        assert gammas[1].id == '2'
+
+    assert cleandoc(connection.fetch_query) == cleandoc("""\
+        SELECT alphas.data, array_agg(gammas.data)
+        FROM public.alphas LEFT JOIN public.deltas
+        ON deltas.data->>'alpha_id' = alphas.data->>'id'
+        JOIN public.gammas ON deltas.data->>'gamma_id' = gammas.data->>'id'
+
+        WHERE id = ANY(ARRAY['1'])
+        GROUP BY alphas.data
+        ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 
 async def test_sql_repository_remove_true(alpha_sql_repository):

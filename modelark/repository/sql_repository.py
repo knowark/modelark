@@ -91,21 +91,31 @@ class SqlRepository(Repository, Generic[T]):
 
         if join:
             reference = (link == self) and join or self
-            join_table = getattr(join, 'table')
+            join_table = link_table = getattr(join, 'table')
             join_jsonb_field = getattr(join, 'jsonb_field')
             source = source or f'{reference.model.__name__.lower()}_id'
+            pivot = link not in (self, join) and link
+            if pivot:
+                link_table = getattr(pivot, 'table')
 
             select = (f"SELECT {self.table}.{self.jsonb_field}, "
                       f"array_agg({join_table}.{join_jsonb_field})")
-            on = (f"ON {join_table}.{join_jsonb_field}->>'{source}' = "
+
+            on = (f"ON {link_table}.{join_jsonb_field}->>'{source}' = "
                   f"{self.table}.{self.jsonb_field}->>'id'\n")
             if link == self:
                 on = (f"ON {self.table}.{self.jsonb_field}->>'{source}' = "
-                      f"{join_table}.{join_jsonb_field}->>'id'\n")
+                      f"{link_table}.{join_jsonb_field}->>'id'\n")
+            elif pivot:
+                target = target or f'{join.model.__name__.lower()}_id'
+                link_jsonb_field = getattr(link, 'jsonb_field')
+                on += (f"        JOIN {self.locator.location}.{join_table} "
+                       f"ON {link_table}.{link_jsonb_field}->>'{target}' = "
+                       f"{join_table}.{join_jsonb_field}->>'id'\n")
 
             from_ = (
                 f"FROM {self.locator.location}.{self.table} "
-                f"LEFT JOIN {self.locator.location}.{join_table}\n"
+                f"LEFT JOIN {self.locator.location}.{link_table}\n"
                 f"        {on}")
             group = f"GROUP BY {self.table}.{self.jsonb_field}"
 

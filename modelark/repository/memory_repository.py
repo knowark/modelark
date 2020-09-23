@@ -93,7 +93,7 @@ class MemoryRepository(Repository, Generic[T]):
 
         reference = (link == self) and join or self
         source = source or f'{reference.model.__name__.lower()}_id'
-        pivot = link and link not in (self, join)
+        pivot = link not in (self, join) and link
 
         field, key = source, 'id'
         if reference is join:
