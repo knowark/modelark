@@ -1,4 +1,5 @@
 import json
+from textwrap import dedent
 from asyncio import sleep
 from textwrap import dedent
 from inspect import cleandoc
@@ -169,6 +170,7 @@ async def test_sql_repository_search_all(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
         """)
     args = connection.fetch_args
@@ -185,6 +187,7 @@ async def test_sql_repository_search_limit(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
         LIMIT 2
         """)
@@ -202,6 +205,7 @@ async def test_sql_repository_search_limit_none(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
         """)
     args = connection.fetch_args
@@ -218,7 +222,9 @@ async def test_sql_repository_search_offset(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
+
         OFFSET 2
         """)
 
@@ -296,12 +302,33 @@ async def test_sql_repository_add_multiple(alpha_sql_repository):
     assert json.loads(args[0][1][0])['field_1'] == 'value_2'
 
 
-# async def test_sql_repository_search_join_one_to_many(
-    # alpha_sql_repository, beta_sql_repository):
+async def test_sql_repository_search_join_one_to_many(
+        alpha_sql_repository, beta_sql_repository):
 
-    # for parent, children in await alpha_sql_repository.search(
-    # [('id', '=', '1')], join=beta_sql_repository):
+    for parent, children in await alpha_sql_repository.search(
+            [('id', '=', '1')], join=beta_sql_repository):
+        pass
+        # assert isinstance(parent, Alpha)
+        # assert len(children) == 2
+        # assert all(isinstance(beta, Beta) for beta in children)
 
+    connection = alpha_sql_repository.connector.connection
+
+    # assert cleandoc(connection.fetch_query) == cleandoc(
+        # "SELECT alphas.data, array_agg(betas.data)\n"
+        # "FROM public.alphas LEFT JOIN public.betas\n"
+        # "ON betas.data->>'alpha_id' = alphas.data->>'id'\n"
+        # "GROUP BY alphas.data\n\n"
+        # "WHERE id = ANY(ARRAY['1'])")
+
+    assert cleandoc(connection.fetch_query) == cleandoc("""\
+        SELECT alphas.data, array_agg(betas.data)
+        FROM public.alphas LEFT JOIN public.betas
+        ON betas.data->>'alpha_id' = alphas.data->>'id'
+
+        WHERE id = ANY(ARRAY['1'])
+        GROUP BY alphas.data
+        ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 # async def test_sql_repository_search_join_many_to_one(
     # alpha_sql_repository, beta_sql_repository):

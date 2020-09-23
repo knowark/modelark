@@ -1,7 +1,8 @@
 import time
 import json
 from uuid import uuid4
-from typing import List, Tuple, Mapping, Generic, Callable, Union, overload
+from typing import (
+    List, Type, Tuple, Mapping, Generic, Callable, Union, overload)
 from ..common import (
     T, R, L, Domain, Conditioner, DefaultConditioner,
     Locator, DefaultLocator, Editor, DefaultEditor)
@@ -82,23 +83,49 @@ class SqlRepository(Repository, Generic[T]):
 
         condition, parameters = self.conditioner.parse(domain)
 
-        query = f"""
-        SELECT {self.jsonb_field}
-        FROM {self.locator.location}.{self.table}
-        WHERE {condition}
-        {self._order_by()}
+        select = f"SELECT {self.jsonb_field}"
+        from_ = f"FROM {self.locator.location}.{self.table}"
+        where = f"WHERE {condition}"
+        group = ''
+        order = f"{self._order_by()}"
+
+        if join:
+            reference = (link == self) and join or self
+            join_table = getattr(join, 'table')
+            join_jsonb_field = getattr(join, 'jsonb_field')
+            source = source or f'{reference.model.__name__.lower()}_id'
+
+            select = (f"SELECT {self.table}.{self.jsonb_field}, "
+                      f"array_agg({join_table}.{join_jsonb_field})")
+            from_ = (
+                f"FROM {self.locator.location}.{self.table} "
+                f"LEFT JOIN {self.locator.location}.{join_table}\n"
+                f"        ON {join_table}.{join_jsonb_field}->>'{source}' = "
+                f"{self.table}.{self.jsonb_field}->>'id'\n")
+            group = f"GROUP BY {self.table}.{self.jsonb_field}"
+
+        query = f"""\
+        {select}
+        {from_}
+        {where}
+        {group}
+        {order}
+        {f'LIMIT {limit}' if limit is not None else ''}
+        {f'OFFSET {offset}' if offset else ''}
         """
 
-        if limit is not None:
-            query = "".join([query, f"LIMIT {limit}"])
-        if offset is not None:
-            query = "".join([query, f"OFFSET {offset}"])
-
         connection = await self.connector.get(self.locator.zone)
-        result = await connection.fetch(query, *parameters)
+        rows = await connection.fetch(query, *parameters)
 
-        return [self.constructor(**json.loads(row[self.jsonb_field]))
-                for row in result if self.jsonb_field in row]
+        records = [self.constructor(**json.loads(row[self.jsonb_field]))
+                   for row in rows if self.jsonb_field in row]
+
+        return records
+
+        # SELECT alphas.data, array_agg(betas.data)
+        # FROM public.alphas LEFT JOIN public.betas
+        # ON betas.data->>'alpha_id' = alphas.data->>'id'
+        # GROUP BY alphas.data
 
     async def remove(self, item: Union[T, List[T]]) -> bool:
         if not item:
