@@ -325,13 +325,33 @@ async def test_sql_repository_search_join_one_to_many(
         GROUP BY alphas.data
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
-# async def test_sql_repository_search_join_many_to_one(
-    # alpha_sql_repository, beta_sql_repository):
 
-    # for element, siblings in await beta_sql_repository.search(
-    # [('id', '=', '1')], join=alpha_sql_repository,
-    # link=beta_sql_repository):
+async def test_sql_repository_search_join_many_to_one(
+        alpha_sql_repository, beta_sql_repository):
 
+    beta_sql_repository.connector.connection.fetch_result = [
+        {'data': '{"id": "1", "alpha_id": "1"}',
+         'array_agg': ['{"id": "1", "field_1": "value_1"}']}
+    ]
+
+    connection = alpha_sql_repository.connector.connection
+
+    for element, siblings in await beta_sql_repository.search(
+        [('id', '=', '1')], join=alpha_sql_repository,
+            link=beta_sql_repository):
+        pass
+        assert isinstance(element, Beta)
+        assert len(siblings) == 1
+        assert isinstance(next(iter(siblings)), Alpha)
+
+    assert cleandoc(connection.fetch_query) == cleandoc("""\
+        SELECT betas.data, array_agg(alphas.data)
+        FROM public.betas LEFT JOIN public.alphas
+        ON betas.data->>'alpha_id' = alphas.data->>'id'
+
+        WHERE id = ANY(ARRAY['1'])
+        GROUP BY betas.data
+        ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 # async def test_sql_repository_search_join_many_to_many(
     # alpha_sql_repository, gamma_sql_repository,

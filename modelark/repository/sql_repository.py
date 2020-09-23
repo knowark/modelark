@@ -97,11 +97,16 @@ class SqlRepository(Repository, Generic[T]):
 
             select = (f"SELECT {self.table}.{self.jsonb_field}, "
                       f"array_agg({join_table}.{join_jsonb_field})")
+            on = (f"ON {join_table}.{join_jsonb_field}->>'{source}' = "
+                  f"{self.table}.{self.jsonb_field}->>'id'\n")
+            if link == self:
+                on = (f"ON {self.table}.{self.jsonb_field}->>'{source}' = "
+                      f"{join_table}.{join_jsonb_field}->>'id'\n")
+
             from_ = (
                 f"FROM {self.locator.location}.{self.table} "
                 f"LEFT JOIN {self.locator.location}.{join_table}\n"
-                f"        ON {join_table}.{join_jsonb_field}->>'{source}' = "
-                f"{self.table}.{self.jsonb_field}->>'id'\n")
+                f"        {on}")
             group = f"GROUP BY {self.table}.{self.jsonb_field}"
 
         query = f"""\
