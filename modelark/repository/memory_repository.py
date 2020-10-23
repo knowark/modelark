@@ -122,7 +122,7 @@ class MemoryRepository(Repository, Generic[T]):
         return [(item, relation_map[getattr(item, key)]) for item in items]
 
     def load(self, data: Dict[str, Dict[str, T]]) -> None:
-        self.data = data
+        self.data.update(data)
 
     @property
     def _location(self) -> str:
