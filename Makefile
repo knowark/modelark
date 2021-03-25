@@ -22,3 +22,8 @@ PART ?= patch
 
 version:
 	bump2version $(PART) pyproject.toml modelark/__init__.py --tag --commit
+
+gitmessage:
+	touch .gitmessage
+	echo "\n# commit message\n.gitmessage" >> .gitignore
+	git config commit.template .gitmessage
