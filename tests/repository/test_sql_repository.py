@@ -1,6 +1,5 @@
 import json
 from asyncio import sleep
-from textwrap import dedent
 from inspect import cleandoc
 from typing import Callable, List, Tuple, Dict, Mapping, Any
 from pytest import fixture, mark, raises
@@ -49,7 +48,7 @@ def mock_connector():
             self.execute_result = ''
             self.fetch_query = ''
             self.fetch_args: Tuple = ()
-            self.fetch_result: List[Mapping] = [{}]
+            self.fetch_result: List[Any] = []
             self.data: Dict = {}
 
         async def execute(self, query: str, *args) -> str:
@@ -57,7 +56,7 @@ def mock_connector():
             self.execute_args = args
             return self.execute_result
 
-        async def fetch(self, query: str, *args) -> List[Mapping]:
+        async def fetch(self, query: str, *args) -> List[Any]:
             self.fetch_query = query
             self.fetch_args = args
             return self.fetch_result
@@ -169,6 +168,7 @@ async def test_sql_repository_search_all(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
         """)
     args = connection.fetch_args
@@ -185,6 +185,7 @@ async def test_sql_repository_search_limit(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
         LIMIT 2
         """)
@@ -202,6 +203,7 @@ async def test_sql_repository_search_limit_none(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
         """)
     args = connection.fetch_args
@@ -218,7 +220,9 @@ async def test_sql_repository_search_offset(alpha_sql_repository):
         SELECT data
         FROM public.alphas
         WHERE 1 = 1
+
         ORDER BY data->>'created_at' DESC NULLS LAST
+
         OFFSET 2
         """)
 
@@ -296,33 +300,87 @@ async def test_sql_repository_add_multiple(alpha_sql_repository):
     assert json.loads(args[0][1][0])['field_1'] == 'value_2'
 
 
-# async def test_sql_repository_search_join_one_to_many(
-    # alpha_sql_repository, beta_sql_repository):
+async def test_sql_repository_search_join_one_to_many(
+        alpha_sql_repository, beta_sql_repository):
+    alpha_sql_repository.connector.connection.fetch_result = [
+        {'data': '{"id": "1", "field_1": "value_1"}',
+         'array_agg': ['{"id": "1", "alpha_id": "1"}',
+                       '{"id": "2", "alpha_id": "1"}']}
+    ]
 
-    # for parent, children in await alpha_sql_repository.search(
-    # [('id', '=', '1')], join=beta_sql_repository):
+    connection = alpha_sql_repository.connector.connection
+
+    for parent, children in await alpha_sql_repository.search(
+            [('id', '=', '1')], join=beta_sql_repository):
+        assert isinstance(parent, Alpha)
+        assert len(children) == 2
+        assert all(isinstance(beta, Beta) for beta in children)
+
+    assert cleandoc(connection.fetch_query) == cleandoc("""\
+        SELECT alphas.data, array_agg(betas.data)
+        FROM public.alphas LEFT JOIN public.betas
+        ON betas.data->>'alpha_id' = alphas.data->>'id'
+
+        WHERE id = ANY(ARRAY['1'])
+        GROUP BY alphas.data
+        ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 
-# async def test_sql_repository_search_join_many_to_one(
-    # alpha_sql_repository, beta_sql_repository):
+async def test_sql_repository_search_join_many_to_one(
+        alpha_sql_repository, beta_sql_repository):
 
-    # for element, siblings in await beta_sql_repository.search(
-    # [('id', '=', '1')], join=alpha_sql_repository,
-    # link=beta_sql_repository):
+    beta_sql_repository.connector.connection.fetch_result = [
+        {'data': '{"id": "1", "alpha_id": "1"}',
+         'array_agg': ['{"id": "1", "field_1": "value_1"}']}
+    ]
+
+    connection = alpha_sql_repository.connector.connection
+
+    for element, siblings in await beta_sql_repository.search(
+        [('id', '=', '1')], join=alpha_sql_repository,
+            link=beta_sql_repository):
+        pass
+        assert isinstance(element, Beta)
+        assert len(siblings) == 1
+        assert isinstance(next(iter(siblings)), Alpha)
+
+    assert cleandoc(connection.fetch_query) == cleandoc("""\
+        SELECT betas.data, array_agg(alphas.data)
+        FROM public.betas LEFT JOIN public.alphas
+        ON betas.data->>'alpha_id' = alphas.data->>'id'
+
+        WHERE id = ANY(ARRAY['1'])
+        GROUP BY betas.data
+        ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 
-# async def test_sql_repository_search_join_many_to_many(
-    # alpha_sql_repository, gamma_sql_repository,
-    # delta_sql_repository):
+async def test_sql_repository_search_join_many_to_many(
+        alpha_sql_repository, gamma_sql_repository, delta_sql_repository):
 
-    # for alpha, gammas in await alpha_sql_repository.search(
-    # [('id', '=', '1')], join=gamma_sql_repository,
-    # link=delta_sql_repository):
+    alpha_sql_repository.connector.connection.fetch_result = [
+        {'data': '{"id": "1", "alpha_id": "1"}',
+         'array_agg': ['{"id": "1"}', '{"id": "2"}']}
+    ]
 
-    # assert isinstance(alpha, Alpha)
-    # assert len(gammas) == 2
-    # assert gammas[0].id == '1'
-    # assert gammas[1].id == '2'
+    connection = alpha_sql_repository.connector.connection
+    for alpha, gammas in await alpha_sql_repository.search(
+        [('id', '=', '1')], join=gamma_sql_repository,
+            link=delta_sql_repository):
+
+        assert isinstance(alpha, Alpha)
+        assert len(gammas) == 2
+        assert gammas[0].id == '1'
+        assert gammas[1].id == '2'
+
+    assert cleandoc(connection.fetch_query) == cleandoc("""\
+        SELECT alphas.data, array_agg(gammas.data)
+        FROM public.alphas LEFT JOIN public.deltas
+        ON deltas.data->>'alpha_id' = alphas.data->>'id'
+        JOIN public.gammas ON deltas.data->>'gamma_id' = gammas.data->>'id'
+
+        WHERE id = ANY(ARRAY['1'])
+        GROUP BY alphas.data
+        ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 
 async def test_sql_repository_remove_true(alpha_sql_repository):

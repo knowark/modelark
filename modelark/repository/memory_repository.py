@@ -78,7 +78,7 @@ class MemoryRepository(Repository, Generic[T]):
 
         items: List[T] = []
         filter_function = self.filterer.parse(domain)
-        for item in list(self.data[self._location].values()):
+        for item in list(self.data.setdefault(self._location, {}).values()):
             if filter_function(item):
                 items.append(item)
 
@@ -93,7 +93,7 @@ class MemoryRepository(Repository, Generic[T]):
 
         reference = (link == self) and join or self
         source = source or f'{reference.model.__name__.lower()}_id'
-        pivot = link and link not in (self, join)
+        pivot = link not in (self, join) and link
 
         field, key = source, 'id'
         if reference is join:
@@ -122,7 +122,7 @@ class MemoryRepository(Repository, Generic[T]):
         return [(item, relation_map[getattr(item, key)]) for item in items]
 
     def load(self, data: Dict[str, Dict[str, T]]) -> None:
-        self.data = data
+        self.data.update(data)
 
     @property
     def _location(self) -> str:
