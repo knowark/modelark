@@ -57,7 +57,8 @@ class SqlRepository(Repository, Generic[T]):
                 for row in rows if self.jsonb_field in row]
 
     async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None) -> List[T]:
+                     limit: int = None, offset: int = None,
+                     order: str = None) -> List[T]:
 
         condition, parameters = self.conditioner.parse(domain)
 
@@ -65,14 +66,22 @@ class SqlRepository(Repository, Generic[T]):
         from_ = f"FROM {self.locator.location}.{self.table}"
         where = f"WHERE {condition}"
         group = ''
-        order = f"{self._order_by()}"
+        order_ = f"{self._order_by()}"
+        if order:
+            tokens = []
+            fields = order.split(',')
+            for field in fields:
+                key, *direction = field.split()
+                tokens.append(f"{self.jsonb_field}->>'{key}' "
+                              f"{next(iter(direction), '')}")
+            order_ = 'ORDER BY ' + ', '.join(tokens)
 
         query = f"""\
         {select}
         {from_}
         {where}
         {group}
-        {order}
+        {order_}
         {f'LIMIT {limit}' if limit is not None else ''}
         {f'OFFSET {offset}' if offset else ''}
         """

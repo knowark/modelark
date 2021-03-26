@@ -227,6 +227,24 @@ async def test_sql_repository_search_offset(alpha_sql_repository):
         """)
 
 
+async def test_sql_repository_search_order(alpha_sql_repository):
+    items = await alpha_sql_repository.search(
+        [], order='field_1 DESC, id ASC')
+
+    connection = alpha_sql_repository.connector.connection
+
+    assert cleandoc(connection.fetch_query) == cleandoc(
+        """
+        SELECT data
+        FROM public.alphas
+        WHERE 1 = 1
+
+        ORDER BY data->>'field_1' DESC, data->>'id' ASC
+        """)
+    args = connection.fetch_args
+    assert args == ()
+
+
 async def test_sql_repository_add(alpha_sql_repository) -> None:
     item = Alpha(id="4", field_1="value_1")
 
