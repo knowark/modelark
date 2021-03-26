@@ -35,30 +35,8 @@ class RestRepository(Repository, Generic[T]):
 
         return items
 
-    @overload
     async def search(self, domain: Domain,
                      limit: int = None, offset: int = None) -> List[T]:
-        """Standard search method"""
-
-    @overload
-    async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None,
-                     *,
-                     join: 'Repository[R]',
-                     link: 'Repository[L]' = None,
-                     source: str = None,
-                     target: str = None) -> List[Tuple[T, List[R]]]:
-        """Joining search method"""
-
-    async def search(
-            self, domain: Domain,
-            limit: int = None,
-            offset: int = None,
-            *,
-            join: 'Repository[R]' = None,
-            link: 'Repository[L]' = None,
-            source: str = None,
-            target: str = None) -> Union[List[T], List[Tuple[T, List[R]]]]:
 
         filter = json.dumps(domain)
 
