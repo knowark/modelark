@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import defaultdict
 from json import loads, load, dump
 from uuid import uuid4
-from typing import Dict, List, Tuple, Any, Callable, Generic, Union, overload
+from typing import Dict, List, Tuple, Any, Callable, Generic, Union, cast
 from ..common import (
     T, R, L, Domain, Filterer, DefaultFilterer,
     Locator, DefaultLocator, Editor, DefaultEditor)
@@ -86,7 +86,8 @@ class JsonRepository(Repository, Generic[T]):
         return count
 
     async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None) -> List[T]:
+                     limit: int = None, offset: int = None,
+                     order: str = None) -> List[T]:
         items: List[T] = []
         if not self.file_path.exists():
             return items
@@ -106,6 +107,13 @@ class JsonRepository(Repository, Generic[T]):
             items = items[offset:]
         if limit is not None:
             items = items[:limit]
+        if order:
+            fields = order.lower().split(',')
+            for field in reversed(fields):
+                key, *direction = field.split()
+                items = cast(List[T], sorted(
+                    items, key=lambda item: getattr(item, key),
+                    reverse=('desc' in direction)))
 
         return items
 

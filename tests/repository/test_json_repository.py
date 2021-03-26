@@ -130,6 +130,16 @@ async def test_json_repository_search_offset(alpha_json_repository):
     assert len(items) == 1
 
 
+async def test_memory_repository_order_multiple(alpha_json_repository):
+    items = await alpha_json_repository.search(
+        [], order='field_1 DESC, id ASC')
+
+    assert len(items) == 3
+    assert items[0].id == '3'
+    assert items[1].id == '2'
+    assert items[2].id == '1'
+
+
 async def test_json_repository_search_limit_and_offset_none(
         alpha_json_repository):
     items = await alpha_json_repository.search([], limit=None, offset=None)
