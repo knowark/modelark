@@ -28,8 +28,8 @@ class RestRepository(Repository, Generic[T]):
         items = item if isinstance(item, list) else [item]
 
         connection = await self.connector.get()
-        parameters = {'method': 'PUT', 'payload': json.dumps(
-            [vars(item) for item in items])}
+        parameters = {'method': 'PUT', 'payload': [
+            vars(item) for item in items]}
 
         await connection.fetch(self.endpoint, **parameters)
 
@@ -70,9 +70,9 @@ class RestRepository(Repository, Generic[T]):
             domain_param = self.settings.get('domain_param', 'filter')
             query_params[domain_param] = json.dumps(domain)
         if limit:
-            parameters['limit'] = str(limit)
+            query_params['limit'] = str(limit)
         if offset:
-            parameters['offset'] = str(offset)
+            query_params['offset'] = str(offset)
 
         if query_params:
             parameters['query_params'] = query_params
@@ -93,11 +93,11 @@ class RestRepository(Repository, Generic[T]):
 
         connection = await self.connector.get()
 
-        parameters = {'method': 'DELETE'}
+        parameters: Dict[str, Any] = {'method': 'DELETE'}
         if len(items) == 1:
             parameters['path'] = f'/{ids[0]}'
         else:
-            parameters['payload'] = json.dumps(ids)
+            parameters['payload'] = ids
 
         records = await connection.fetch(self.endpoint, **parameters)
 

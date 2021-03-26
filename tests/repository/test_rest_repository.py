@@ -212,7 +212,7 @@ async def test_rest_repository_search_limit(alpha_rest_repository):
 
     kwargs = connection.fetch_kwargs
     assert kwargs['method'] == 'GET'
-    assert kwargs['limit'] == '2'
+    assert kwargs['query_params']['limit'] == '2'
 
 
 async def test_rest_repository_search_limit_none(alpha_rest_repository):
@@ -238,7 +238,7 @@ async def test_rest_repository_search_offset(alpha_rest_repository):
 
     kwargs = connection.fetch_kwargs
     assert kwargs.get('limit') is None
-    assert kwargs['offset'] == '2'
+    assert kwargs['query_params']['offset'] == '2'
 
 
 async def test_rest_repository_add(alpha_rest_repository) -> None:
@@ -253,8 +253,8 @@ async def test_rest_repository_add(alpha_rest_repository) -> None:
 
     kwargs = connection.fetch_kwargs
     assert kwargs['method'] == 'PUT'
-    assert json.loads(kwargs['payload'])[0]['id'] == "4"
-    assert json.loads(kwargs['payload'])[0]['field_1'] == "value_1"
+    assert kwargs['payload'][0]['id'] == "4"
+    assert kwargs['payload'][0]['field_1'] == "value_1"
 
 
 async def test_rest_repository_add_multiple(alpha_rest_repository):
@@ -272,10 +272,10 @@ async def test_rest_repository_add_multiple(alpha_rest_repository):
 
     kwargs = connection.fetch_kwargs
     assert kwargs['method'] == 'PUT'
-    assert json.loads(kwargs['payload'])[0]['id'] == "1"
-    assert json.loads(kwargs['payload'])[0]['field_1'] == "value_1"
-    assert json.loads(kwargs['payload'])[1]['id'] == "2"
-    assert json.loads(kwargs['payload'])[1]['field_1'] == "value_2"
+    assert kwargs['payload'][0]['id'] == "1"
+    assert kwargs['payload'][0]['field_1'] == "value_1"
+    assert kwargs['payload'][1]['id'] == "2"
+    assert kwargs['payload'][1]['field_1'] == "value_2"
 
 
 async def test_rest_repository_remove_true(alpha_rest_repository):
@@ -310,7 +310,7 @@ async def test_rest_repository_remove_true_multiple(alpha_rest_repository):
 
     kwargs = connection.fetch_kwargs
     assert kwargs['method'] == 'DELETE'
-    assert kwargs['payload'] == '["5", "6"]'
+    assert kwargs['payload'] == ["5", "6"]
     assert kwargs.get('path') is None
 
     assert deleted is True
