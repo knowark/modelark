@@ -14,13 +14,13 @@ class JsonRepository(Repository, Generic[T]):
     def __init__(self,
                  data_path: str,
                  collection: str,
-                 item_class: Callable[..., T],
+                 constructor: Callable[..., T],
                  filterer: Filterer = None,
                  locator: Locator = None,
                  editor: Editor = None) -> None:
         self.data_path = data_path
         self.collection = collection
-        self.item_class: Callable[..., T] = item_class
+        self.constructor: Callable[..., T] = constructor
         self.filterer = filterer or DefaultFilterer()
         self.locator = locator or DefaultLocator()
         self.editor = editor or DefaultEditor()
@@ -80,7 +80,7 @@ class JsonRepository(Repository, Generic[T]):
         domain = domain or []
         filter_function = self.filterer.parse(domain)
         for item_dict in list(data[self.collection].values()):
-            item = self.item_class(**item_dict)
+            item = self.constructor(**item_dict)
             if filter_function(item):
                 count += 1
         return count
@@ -98,7 +98,7 @@ class JsonRepository(Repository, Generic[T]):
 
         filter_function = self.filterer.parse(domain)
         for item_dict in items_dict.values():
-            item = self.item_class(**item_dict)
+            item = self.constructor(**item_dict)
 
             if filter_function(item):
                 items.append(item)

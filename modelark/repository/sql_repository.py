@@ -13,7 +13,7 @@ from .repository import Repository
 class SqlRepository(Repository, Generic[T]):
     def __init__(self,
                  table: str,
-                 constructor: Callable,
+                 constructor: Callable[..., T],
                  connector: Connector,
                  conditioner: Conditioner = None,
                  locator: Locator = None,

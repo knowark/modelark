@@ -41,7 +41,7 @@ def alpha_json_repository(tmp_path) -> JsonRepository[Alpha]:
     json_repository = AlphaJsonRepository(
         data_path=str(tmp_path),
         collection=collection,
-        item_class=Alpha,
+        constructor=Alpha,
         locator=DefaultLocator('origin')
     )
 
