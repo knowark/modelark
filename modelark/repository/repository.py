@@ -21,31 +21,10 @@ class Repository(ABC, Generic[T]):
     async def count(self, domain: Domain = None) -> int:
         "Count items matching a query domain"
 
-    @overload
+    @abstractmethod
     async def search(self, domain: Domain,
                      limit: int = None, offset: int = None) -> List[T]:
         """Standard search method"""
-
-    @overload
-    async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None,
-                     *,
-                     join: 'Repository[R]',
-                     link: 'Repository[L]' = None,
-                     source: str = None,
-                     target: str = None) -> List[Tuple[T, List[R]]]:
-        """Joining search method"""
-
-    @abstractmethod
-    async def search(
-            self, domain: Domain,
-            limit: int = None, offset: int = None,
-            *,
-            join: 'Repository[R]' = None,
-            link: 'Repository[L]' = None,
-            source: str = None,
-            target: str = None) -> Union[List[T], List[Tuple[T, List[R]]]]:
-        """Search items matching a query domain"""
 
     async def join(
             self, domain: Domain,

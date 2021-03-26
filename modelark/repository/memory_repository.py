@@ -51,31 +51,8 @@ class MemoryRepository(Repository, Generic[T]):
                 count += 1
         return count
 
-    @overload
     async def search(self, domain: Domain,
                      limit: int = None, offset: int = None) -> List[T]:
-        """Standard search method"""
-
-    @overload
-    async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None,
-                     *,
-                     join: 'Repository[R]',
-                     link: 'Repository[L]' = None,
-                     source: str = None,
-                     target: str = None) -> List[Tuple[T, List[R]]]:
-        """Joining search method"""
-
-    async def search(
-            self, domain: Domain,
-            limit: int = None,
-            offset: int = None,
-            *,
-            join: 'Repository[R]' = None,
-            link: 'Repository[L]' = None,
-            source: str = None,
-            target: str = None) -> Union[List[T], List[Tuple[T, List[R]]]]:
-
         items: List[T] = []
         filter_function = self.filterer.parse(domain)
         for item in list(self.data.setdefault(self._location, {}).values()):
@@ -88,38 +65,7 @@ class MemoryRepository(Repository, Generic[T]):
         if limit is not None:
             items = items[:min(limit, self.max_items)]
 
-        if not join:
-            return items
-
-        reference = (link == self) and join or self
-        source = source or f'{reference.model.__name__.lower()}_id'
-        pivot = link not in (self, join) and link
-
-        field, key = source, 'id'
-        if reference is join:
-            field, key = key, source
-
-        entries: Union[List[T], List[L]] = items
-        if pivot and link:
-            entries = await link.search([
-                (field, 'in', [getattr(entry, key) for entry in entries])])
-            target = target or f'{join.model.__name__.lower()}_id'
-            field, key = 'id', target
-
-        record_map = defaultdict(list)
-        for record in await join.search([
-                (field, 'in', [getattr(entry, key) for entry in entries])]):
-            record_map[getattr(record, field)].append(record)
-
-        relation_map = record_map
-        if pivot:
-            relation_map = defaultdict(list)
-            for entry in entries:
-                relation_map[getattr(entry, source)].extend(
-                    record_map[getattr(entry, key)])
-            field, key = source, 'id'
-
-        return [(item, relation_map[getattr(item, key)]) for item in items]
+        return items
 
     def load(self, data: Dict[str, Dict[str, T]]) -> None:
         self.data.update(data)
