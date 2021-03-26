@@ -69,10 +69,10 @@ def mock_connector():
             self.connection = MockConnection()
             self.pool = [self.connection]
 
-        async def get(self, zone='') -> Connection:
+        async def get(self, *args, **kwargs) -> Connection:
             return self.pool.pop()
 
-        async def put(self, connection, zone='') -> None:
+        async def put(self, connection, *args, **kwargs) -> None:
             self.pool.append(connection)
 
         def load(self, data) -> None:
@@ -252,24 +252,6 @@ async def test_sql_repository_add(alpha_sql_repository) -> None:
     assert json.loads(args[0][0][0])['field_1'] == 'value_1'
 
 
-# async def test_sql_repository_add_update(alpha_sql_repository) -> None:
-    # created_entity = Alpha(id="1", field_1="value_1")
-    # created_entity, *_ = await alpha_sql_repository.add(created_entity)
-
-    # await sleep(1)
-
-    # updated_entity = Alpha(id="1", field_1="New Value")
-    # updated_entity, *_ = await alpha_sql_repository.add(updated_entity)
-
-    # assert created_entity.created_at == updated_entity.created_at
-
-
-# async def test_sql_repository_add_no_id(alpha_sql_repository) -> None:
-    # item = Alpha(field_1="value_1")
-
-    # await alpha_sql_repository.add(item)
-
-
 async def test_sql_repository_add_multiple(alpha_sql_repository):
     items = [
         Alpha(id='1', field_1="value_1"),
@@ -300,7 +282,7 @@ async def test_sql_repository_add_multiple(alpha_sql_repository):
     assert json.loads(args[0][1][0])['field_1'] == 'value_2'
 
 
-async def test_sql_repository_search_join_one_to_many(
+async def test_sql_repository_search_one_to_many(
         alpha_sql_repository, beta_sql_repository):
     alpha_sql_repository.connector.connection.fetch_result = [
         {'data': '{"id": "1", "field_1": "value_1"}',
@@ -310,7 +292,7 @@ async def test_sql_repository_search_join_one_to_many(
 
     connection = alpha_sql_repository.connector.connection
 
-    for parent, children in await alpha_sql_repository.search(
+    for parent, children in await alpha_sql_repository.join(
             [('id', '=', '1')], join=beta_sql_repository):
         assert isinstance(parent, Alpha)
         assert len(children) == 2
@@ -326,7 +308,7 @@ async def test_sql_repository_search_join_one_to_many(
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 
-async def test_sql_repository_search_join_many_to_one(
+async def test_sql_repository_join_many_to_one(
         alpha_sql_repository, beta_sql_repository):
 
     beta_sql_repository.connector.connection.fetch_result = [
@@ -336,7 +318,7 @@ async def test_sql_repository_search_join_many_to_one(
 
     connection = alpha_sql_repository.connector.connection
 
-    for element, siblings in await beta_sql_repository.search(
+    for element, siblings in await beta_sql_repository.join(
         [('id', '=', '1')], join=alpha_sql_repository,
             link=beta_sql_repository):
         pass
@@ -354,7 +336,7 @@ async def test_sql_repository_search_join_many_to_one(
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
 
-async def test_sql_repository_search_join_many_to_many(
+async def test_sql_repository_join_many_to_many(
         alpha_sql_repository, gamma_sql_repository, delta_sql_repository):
 
     alpha_sql_repository.connector.connection.fetch_result = [
@@ -363,7 +345,7 @@ async def test_sql_repository_search_join_many_to_many(
     ]
 
     connection = alpha_sql_repository.connector.connection
-    for alpha, gammas in await alpha_sql_repository.search(
+    for alpha, gammas in await alpha_sql_repository.join(
         [('id', '=', '1')], join=gamma_sql_repository,
             link=delta_sql_repository):
 
