@@ -13,24 +13,6 @@ class Alpha(Entity):
         self.field_1 = attributes.get('field_1', '')
 
 
-class Beta(Entity):
-    def __init__(self, **attributes) -> None:
-        super().__init__(**attributes)
-        self.alpha_id = attributes.get('alpha_id', "")
-
-
-class Gamma(Entity):
-    def __init__(self, **attributes) -> None:
-        super().__init__(**attributes)
-
-
-class Delta(Entity):
-    def __init__(self, **attributes) -> None:
-        super().__init__(**attributes)
-        self.alpha_id = attributes.get('alpha_id', "")
-        self.gamma_id = attributes.get('gamma_id', "")
-
-
 def test_json_repository_implementation() -> None:
     assert issubclass(JsonRepository, Repository)
 
@@ -60,100 +42,6 @@ def alpha_json_repository(tmp_path) -> JsonRepository[Alpha]:
         data_path=str(tmp_path),
         collection=collection,
         item_class=Alpha,
-        locator=DefaultLocator('origin')
-    )
-
-    return json_repository
-
-
-@fixture
-def beta_json_repository(tmp_path) -> JsonRepository[Beta]:
-    item_dict = {
-        "1": vars(Beta(id='1', alpha_id='1')),
-        "2": vars(Beta(id='2', alpha_id='1')),
-        "3": vars(Beta(id='3', alpha_id='2'))
-    }
-
-    tenant_directory = tmp_path / "origin"
-    tenant_directory.mkdir(parents=True, exist_ok=True)
-    collection = 'betas'
-
-    file_path = str(tenant_directory / f'{collection}.json')
-
-    with open(file_path, 'w') as f:
-        data = dumps({collection: item_dict})
-        f.write(data)
-
-    class BetaJsonRepository(JsonRepository[Beta]):
-        model = Beta
-
-    json_repository = BetaJsonRepository(
-        data_path=str(tmp_path),
-        collection=collection,
-        item_class=Beta,
-        locator=DefaultLocator('origin')
-    )
-
-    return json_repository
-
-
-@fixture
-def gamma_json_repository(tmp_path) -> JsonRepository[Gamma]:
-    item_dict = {
-        "1": vars(Gamma(id='1')),
-        "2": vars(Gamma(id='2')),
-        "3": vars(Gamma(id='3'))
-    }
-
-    tenant_directory = tmp_path / "origin"
-    tenant_directory.mkdir(parents=True, exist_ok=True)
-    collection = 'gammas'
-
-    file_path = str(tenant_directory / f'{collection}.json')
-
-    with open(file_path, 'w') as f:
-        data = dumps({collection: item_dict})
-        f.write(data)
-
-    class GammaJsonRepository(JsonRepository[Gamma]):
-        model = Gamma
-
-    json_repository = GammaJsonRepository(
-        data_path=str(tmp_path),
-        collection=collection,
-        item_class=Gamma,
-        locator=DefaultLocator('origin')
-    )
-
-    return json_repository
-
-
-@fixture
-def delta_json_repository(tmp_path) -> JsonRepository[Delta]:
-    item_dict = {
-        "1": vars(Delta(id='1', alpha_id='1', gamma_id='1')),
-        "2": vars(Delta(id='2', alpha_id='1', gamma_id='2')),
-        "3": vars(Delta(id='3', alpha_id='2', gamma_id='3')),
-        "4": vars(Delta(id='3', alpha_id='3', gamma_id='3'))
-    }
-
-    tenant_directory = tmp_path / "origin"
-    tenant_directory.mkdir(parents=True, exist_ok=True)
-    collection = 'deltas'
-
-    file_path = str(tenant_directory / f'{collection}.json')
-
-    with open(file_path, 'w') as f:
-        data = dumps({collection: item_dict})
-        f.write(data)
-
-    class DeltaJsonRepository(JsonRepository[Delta]):
-        model = Delta
-
-    json_repository = DeltaJsonRepository(
-        data_path=str(tmp_path),
-        collection=collection,
-        item_class=Delta,
         locator=DefaultLocator('origin')
     )
 
@@ -255,43 +143,6 @@ async def test_json_repository_search_non_existent_file(
     assert len(items) == 0
 
 
-async def test_json_repository_search_join_one_to_many(
-        alpha_json_repository, beta_json_repository):
-
-    for parent, children in await alpha_json_repository.search(
-            [('id', '=', '1')], join=beta_json_repository):
-
-        assert isinstance(parent, Alpha)
-        assert all(isinstance(beta, Beta) for beta in children)
-        assert len(children) == 2
-
-
-async def test_json_repository_search_join_many_to_one(
-        alpha_json_repository, beta_json_repository):
-
-    for element, siblings in await beta_json_repository.search(
-        [('id', '=', '1')], join=alpha_json_repository,
-            link=beta_json_repository):
-
-        assert isinstance(element, Beta)
-        assert len(siblings) == 1
-        assert isinstance(next(iter(siblings)), Alpha)
-
-
-async def test_json_repository_search_join_many_to_many(
-        alpha_json_repository, gamma_json_repository,
-        delta_json_repository):
-
-    for alpha, gammas in await alpha_json_repository.search(
-        [('id', '=', '1')], join=gamma_json_repository,
-            link=delta_json_repository):
-
-        assert isinstance(alpha, Alpha)
-        assert len(gammas) == 2
-        assert gammas[0].id == '1'
-        assert gammas[1].id == '2'
-
-
 async def test_json_repository_remove(alpha_json_repository):
     file_path = alpha_json_repository.file_path
 
@@ -341,7 +192,7 @@ async def test_json_repository_count(alpha_json_repository):
     assert count == 3
 
 
-async def test_json_repository_count(alpha_json_repository):
+async def test_json_repository_count_non_existent(alpha_json_repository):
     alpha_json_repository.data_path = '/tmp/.non_existent_count'
     count = await alpha_json_repository.count()
     assert count == 0
