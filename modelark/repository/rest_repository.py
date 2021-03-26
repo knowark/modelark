@@ -28,7 +28,8 @@ class RestRepository(Repository, Generic[T]):
         items = item if isinstance(item, list) else [item]
 
         connection = await self.connector.get()
-        parameters = {'method': 'PUT', 'payload': [
+        add_method = self.settings.get('add_method', 'PUT')
+        parameters = {'method': add_method, 'payload': [
             vars(item) for item in items]}
 
         await connection.fetch(self.endpoint, **parameters)
