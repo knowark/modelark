@@ -41,15 +41,13 @@ def alpha_memory_repository() -> MemoryRepository[Alpha]:
     class AlphaMemoryRepository(MemoryRepository[Alpha]):
         model = Alpha
 
-    repository = AlphaMemoryRepository()
-    repository.load({
+    return AlphaMemoryRepository().load({
         "default": {
             "1": Alpha(id='1', field_1='value_1'),
             "2": Alpha(id='2', field_1='value_2'),
             "3": Alpha(id='3', field_1='value_3')
         }
     })
-    return repository
 
 
 @fixture
@@ -57,15 +55,13 @@ def beta_memory_repository() -> MemoryRepository[Beta]:
     class BetaMemoryRepository(MemoryRepository[Beta]):
         model = Beta
 
-    repository = BetaMemoryRepository()
-    repository.load({
+    return BetaMemoryRepository().load({
         "default": {
             "1": Beta(id='1', alpha_id='1'),
             "2": Beta(id='2', alpha_id='1'),
             "3": Beta(id='3', alpha_id='2')
         }
     })
-    return repository
 
 
 @fixture
@@ -73,15 +69,13 @@ def gamma_memory_repository() -> MemoryRepository[Gamma]:
     class GammaMemoryRepository(MemoryRepository[Gamma]):
         model = Gamma
 
-    repository = GammaMemoryRepository()
-    repository.load({
+    return GammaMemoryRepository().load({
         "default": {
             "1": Gamma(id='1'),
             "2": Gamma(id='2'),
             "3": Gamma(id='3')
         }
     })
-    return repository
 
 
 @fixture
@@ -89,8 +83,7 @@ def delta_memory_repository() -> MemoryRepository[Delta]:
     class DeltaMemoryRepository(MemoryRepository[Delta]):
         model = Delta
 
-    repository = DeltaMemoryRepository()
-    repository.load({
+    return DeltaMemoryRepository().load({
         "default": {
             "1": Delta(id='1', alpha_id='1', gamma_id='1'),
             "2": Delta(id='2', alpha_id='1', gamma_id='2'),
@@ -98,7 +91,6 @@ def delta_memory_repository() -> MemoryRepository[Delta]:
             "4": Delta(id='3', alpha_id='3', gamma_id='3')
         }
     })
-    return repository
 
 
 def test_memory_repository_model(alpha_memory_repository) -> None:

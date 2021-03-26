@@ -76,8 +76,9 @@ class MemoryRepository(Repository, Generic[T]):
 
         return items
 
-    def load(self, data: Dict[str, Dict[str, T]]) -> None:
+    def load(self, data: Dict[str, Dict[str, T]]):
         self.data.update(data)
+        return self
 
     @property
     def _location(self) -> str:
