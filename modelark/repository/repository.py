@@ -23,7 +23,8 @@ class Repository(ABC, Generic[T]):
 
     @abstractmethod
     async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None) -> List[T]:
+                     limit: int = None, offset: int = None,
+                     order: str = None) -> List[T]:
         """Standard search method"""
 
     async def join(

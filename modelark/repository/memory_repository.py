@@ -1,7 +1,7 @@
 import time
 from uuid import uuid4
 from collections import defaultdict
-from typing import List, Tuple, Dict, Generic, Union, Any, overload
+from typing import List, Tuple, Dict, Generic, Union, Any, cast
 from ..common import (
     T, R, L, Domain, Locator, DefaultLocator,
     Filterer, DefaultFilterer, Editor, DefaultEditor)
@@ -52,7 +52,8 @@ class MemoryRepository(Repository, Generic[T]):
         return count
 
     async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None) -> List[T]:
+                     limit: int = None, offset: int = None,
+                     order: str = None) -> List[T]:
         items: List[T] = []
         filter_function = self.filterer.parse(domain)
         for item in list(self.data.setdefault(self._location, {}).values()):
@@ -64,6 +65,14 @@ class MemoryRepository(Repository, Generic[T]):
 
         if limit is not None:
             items = items[:min(limit, self.max_items)]
+
+        if order:
+            fields = order.lower().split(',')
+            for field in reversed(fields):
+                key, *direction = field.split()
+                items = cast(List[T], sorted(
+                    items, key=lambda item: getattr(item, key),
+                    reverse=('desc' in direction)))
 
         return items
 

@@ -129,6 +129,34 @@ async def test_memory_repository_search_offset(alpha_memory_repository):
     assert len(items) == 1
 
 
+async def test_memory_repository_order(alpha_memory_repository):
+    items = await alpha_memory_repository.search([], order='field_1')
+
+    assert len(items) == 3
+    assert items[0].id == '1'
+    assert items[1].id == '2'
+    assert items[2].id == '3'
+
+
+async def test_memory_repository_order_desc(alpha_memory_repository):
+    items = await alpha_memory_repository.search([], order='field_1 DESC')
+
+    assert len(items) == 3
+    assert items[0].id == '3'
+    assert items[1].id == '2'
+    assert items[2].id == '1'
+
+
+async def test_memory_repository_order_multiple(alpha_memory_repository):
+    items = await alpha_memory_repository.search(
+        [], order='field_1 DESC, id ASC')
+
+    assert len(items) == 3
+    assert items[0].id == '3'
+    assert items[1].id == '2'
+    assert items[2].id == '1'
+
+
 async def test_memory_repository_add(alpha_memory_repository) -> None:
     item = Alpha(id="4", field_1="value_1")
 
