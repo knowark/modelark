@@ -36,7 +36,8 @@ class RestRepository(Repository, Generic[T]):
         return items
 
     async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None) -> List[T]:
+                     limit: int = None, offset: int = None,
+                     order: str = None) -> List[T]:
 
         filter = json.dumps(domain)
 
@@ -51,6 +52,8 @@ class RestRepository(Repository, Generic[T]):
             query_params['limit'] = str(limit)
         if offset:
             query_params['offset'] = str(offset)
+        if order:
+            query_params['order'] = str(order)
 
         if query_params:
             parameters['query_params'] = query_params

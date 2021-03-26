@@ -17,24 +17,6 @@ class Alpha(Entity):
         self.field_1 = attributes.get('field_1', "")
 
 
-class Beta(Entity):
-    def __init__(self, **attributes) -> None:
-        super().__init__(**attributes)
-        self.alpha_id = attributes.get('alpha_id', "")
-
-
-class Gamma(Entity):
-    def __init__(self, **attributes) -> None:
-        super().__init__(**attributes)
-
-
-class Delta(Entity):
-    def __init__(self, **attributes) -> None:
-        super().__init__(**attributes)
-        self.alpha_id = attributes.get('alpha_id', "")
-        self.gamma_id = attributes.get('gamma_id', "")
-
-
 def test_rest_repository_implementation() -> None:
     assert issubclass(RestRepository, Repository)
 
@@ -100,61 +82,6 @@ def alpha_rest_repository(mock_connector) -> RestRepository[Alpha]:
         }
     })
     return repository
-
-
-# @fixture
-# def beta_rest_repository(mock_connector) -> RestRepository[Beta]:
-    # class BetaRestRepository(RestRepository[Beta]):
-    # model = Beta
-
-    # repository = BetaRestRepository(
-    # 'betas', Beta, mock_connector
-    # )
-    # mock_connector.load({
-    # "default": {
-    # "1": Beta(id='1', alpha_id='1'),
-    # "2": Beta(id='2', alpha_id='1'),
-    # "3": Beta(id='3', alpha_id='2')
-    # }
-    # })
-    # return repository
-
-
-# @fixture
-# def gamma_rest_repository(mock_connector) -> RestRepository[Gamma]:
-    # class GammaRestRepository(RestRepository[Gamma]):
-    # model = Gamma
-
-    # repository = GammaRestRepository(
-    # 'gammas', Gamma, mock_connector
-    # )
-    # mock_connector.load({
-    # "default": {
-    # "1": Gamma(id='1'),
-    # "2": Gamma(id='2'),
-    # "3": Gamma(id='3')
-    # }
-    # })
-    # return repository
-
-
-# @fixture
-# def delta_rest_repository(mock_connector) -> RestRepository[Delta]:
-    # class DeltaRestRepository(RestRepository[Delta]):
-    # model = Delta
-
-    # repository = DeltaRestRepository(
-    # 'deltas', Delta, mock_connector
-    # )
-    # mock_connector.load({
-    # "default": {
-    # "1": Delta(id='1', alpha_id='1', gamma_id='1'),
-    # "2": Delta(id='2', alpha_id='1', gamma_id='2'),
-    # "3": Delta(id='3', alpha_id='2', gamma_id='3'),
-    # "4": Delta(id='3', alpha_id='3', gamma_id='3')
-    # }
-    # })
-    # return repository
 
 
 def test_rest_repository_model(alpha_rest_repository) -> None:
@@ -239,6 +166,20 @@ async def test_rest_repository_search_offset(alpha_rest_repository):
     kwargs = connection.fetch_kwargs
     assert kwargs.get('limit') is None
     assert kwargs['query_params']['offset'] == '2'
+
+
+async def test_rest_repository_search_order(alpha_rest_repository):
+    items = await alpha_rest_repository.search(
+        [], order='field_1 desc, id asc')
+
+    connection = alpha_rest_repository.connector.connection
+
+    assert connection.fetch_query == (
+        "https://service.example.com/alphas")
+
+    kwargs = connection.fetch_kwargs
+    assert kwargs['method'] == 'GET'
+    assert kwargs['query_params']['order'] == 'field_1 desc, id asc'
 
 
 async def test_rest_repository_add(alpha_rest_repository) -> None:
