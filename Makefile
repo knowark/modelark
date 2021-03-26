@@ -11,6 +11,9 @@ test:
 mypy:
 	mypy modelark
 
+push:
+	git push && git push --tags
+
 COVFILE ?= .coverage
 
 coverage:
