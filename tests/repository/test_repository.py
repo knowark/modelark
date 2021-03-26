@@ -8,3 +8,4 @@ def test_repository_methods():
     assert 'search' in methods
     assert 'remove' in methods
     assert 'count' in methods
+    assert 'join' in dir(Repository)

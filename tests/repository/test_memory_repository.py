@@ -205,20 +205,20 @@ async def test_memory_repository_search_limit_zero(alpha_memory_repository):
     assert len(items) == 0
 
 
-async def test_memory_repository_search_join_one_to_many(
+async def test_memory_repository_join_one_to_many(
         alpha_memory_repository, beta_memory_repository):
 
-    for parent, children in await alpha_memory_repository.search(
+    for parent, children in await alpha_memory_repository.join(
             [('id', '=', '1')], join=beta_memory_repository):
         assert isinstance(parent, Alpha)
         assert len(children) == 2
         assert all(isinstance(beta, Beta) for beta in children)
 
 
-async def test_memory_repository_search_join_many_to_one(
+async def test_memory_repository_join_many_to_one(
         alpha_memory_repository, beta_memory_repository):
 
-    for element, siblings in await beta_memory_repository.search(
+    for element, siblings in await beta_memory_repository.join(
         [('id', '=', '1')], join=alpha_memory_repository,
             link=beta_memory_repository):
 
@@ -227,11 +227,11 @@ async def test_memory_repository_search_join_many_to_one(
         assert isinstance(next(iter(siblings)), Alpha)
 
 
-async def test_memory_repository_search_join_many_to_many(
+async def test_memory_repository_join_many_to_many(
         alpha_memory_repository, gamma_memory_repository,
         delta_memory_repository):
 
-    for alpha, gammas in await alpha_memory_repository.search(
+    for alpha, gammas in await alpha_memory_repository.join(
         [('id', '=', '1')], join=gamma_memory_repository,
             link=delta_memory_repository):
 
