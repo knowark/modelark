@@ -1,4 +1,4 @@
-from typing import Protocol, Callable, Any
+from typing import Protocol, List, Callable, Any
 from ..common import Domain
 
 
@@ -15,6 +15,6 @@ class DefaultFilterer:
         if not len(domain) == 1:
             return lambda item: True
         value = domain[0][2]
-        if not isinstance(domain[0][2], (list, tuple)):
-            value = [domain[0][2]]
-        return lambda item: getattr(item, domain[0][0]) in value
+        container = isinstance(
+            value, (list, tuple)) and value or [domain[0][2]]
+        return lambda item: getattr(item, domain[0][0]) in container
