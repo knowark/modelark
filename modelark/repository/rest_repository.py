@@ -32,9 +32,12 @@ class RestRepository(Repository, Generic[T]):
         parameters = {'method': add_method, 'payload': [
             vars(item) for item in items]}
 
-        await connection.fetch(self.endpoint, **parameters)
+        records = await connection.fetch(self.endpoint, **parameters)
 
-        return items
+        if self.constructor:
+            records = [self.constructor(**record) for record in records]
+
+        return cast(List[T], records)
 
     async def search(self, domain: Domain,
                      limit: int = None, offset: int = None,

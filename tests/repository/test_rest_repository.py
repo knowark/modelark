@@ -198,6 +198,24 @@ async def test_rest_repository_add(alpha_rest_repository) -> None:
     assert kwargs['payload'][0]['field_1'] == "value_1"
 
 
+async def test_rest_repository_add_no_constructor(alpha_rest_repository):
+    alpha_rest_repository.constructor = None
+
+    item = Alpha(id="4", field_1="value_1")
+
+    await alpha_rest_repository.add(item)
+
+    connection = alpha_rest_repository.connector.connection
+
+    assert connection.fetch_query == (
+        "https://service.example.com/alphas")
+
+    kwargs = connection.fetch_kwargs
+    assert kwargs['method'] == 'PUT'
+    assert kwargs['payload'][0]['id'] == "4"
+    assert kwargs['payload'][0]['field_1'] == "value_1"
+
+
 async def test_rest_repository_add_multiple(alpha_rest_repository):
     items = [
         Alpha(id='1', field_1="value_1"),
