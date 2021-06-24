@@ -7,4 +7,4 @@ from .repository import (
 
 __author__ = 'Knowark'
 __email__ = 'info@knowark.com'
-__version__ = '0.3.4'
+__version__ = '0.4.0'
