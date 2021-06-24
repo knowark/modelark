@@ -60,7 +60,7 @@ class TestSqlParser(unittest.TestCase):
     def test_sql_parser_with_empty_list(self):
         domain = []
         result = self.parser.parse(domain)
-        expected = "TRUE", ()
+        expected = "1 = 1", ()
         self.assertEqual(result, expected)
 
     def test_sql_parser_with_lists_of_lists(self):

@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Tuple, Type, List, Generic, Union, Optional, overload
-from ..common import Domain, T, R, L
+from ..common import T, R, L
+from ..filterer import Domain
 
 
 class Repository(ABC, Generic[T]):

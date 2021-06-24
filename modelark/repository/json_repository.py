@@ -5,8 +5,8 @@ from json import loads, load, dump
 from uuid import uuid4
 from typing import Dict, List, Tuple, Any, Callable, Generic, Union, cast
 from ..common import (
-    T, R, L, Domain, Filterer, DefaultFilterer,
-    Locator, DefaultLocator, Editor, DefaultEditor)
+    T, R, L, Locator, DefaultLocator, Editor, DefaultEditor)
+from ..filterer import Filterer, FunctionParser, Domain
 from .repository import Repository
 
 
@@ -21,7 +21,7 @@ class JsonRepository(Repository, Generic[T]):
         self.data_path = data_path
         self.collection = collection
         self.constructor: Callable[..., T] = constructor
-        self.filterer = filterer or DefaultFilterer()
+        self.filterer = filterer or FunctionParser()
         self.locator = locator or DefaultLocator()
         self.editor = editor or DefaultEditor()
 

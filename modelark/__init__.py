@@ -1,5 +1,6 @@
 from .common import (
-    Entity, Domain, DataDict, RecordList)
+    Entity, DataDict, RecordList)
+from .filterer import Domain
 from .repository import (
     Repository, MemoryRepository,
     JsonRepository, SqlRepository, RestRepository)

@@ -3,7 +3,8 @@ from asyncio import sleep
 from inspect import cleandoc
 from typing import Callable, List, Tuple, Dict, Mapping, Any
 from pytest import fixture, mark, raises
-from modelark.common import Entity, Domain
+from modelark.common import Entity
+from modelark.filterer import Domain
 from modelark.connector import Connector, Connection
 from modelark.repository import Repository, RestRepository
 

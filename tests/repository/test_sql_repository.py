@@ -3,7 +3,8 @@ from asyncio import sleep
 from inspect import cleandoc
 from typing import Callable, List, Tuple, Dict, Mapping, Any
 from pytest import fixture, mark, raises
-from modelark.common import Entity, Domain
+from modelark.common import Entity
+from modelark.filterer import Domain
 from modelark.connector import Connector, Connection
 from modelark.repository import Repository, SqlRepository
 
@@ -70,7 +71,7 @@ def mock_connector():
             self.pool = [self.connection]
 
         async def get(self, *args, **kwargs) -> Connection:
-            return self.pool.pop()
+            return self.pool.pop()  # type: ignore
 
         async def put(self, connection, *args, **kwargs) -> None:
             self.pool.append(connection)
@@ -321,7 +322,7 @@ async def test_sql_repository_search_one_to_many(
         FROM public.alphas LEFT JOIN public.betas
         ON betas.data->>'alpha_id' = alphas.data->>'id'
 
-        WHERE id = ANY(ARRAY['1'])
+        WHERE (data->>'id')::text = $1
         GROUP BY alphas.data
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
@@ -349,7 +350,7 @@ async def test_sql_repository_join_many_to_one(
         FROM public.betas LEFT JOIN public.alphas
         ON betas.data->>'alpha_id' = alphas.data->>'id'
 
-        WHERE id = ANY(ARRAY['1'])
+        WHERE (data->>'id')::text = $1
         GROUP BY betas.data
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
@@ -378,7 +379,7 @@ async def test_sql_repository_join_many_to_many(
         ON deltas.data->>'alpha_id' = alphas.data->>'id'
         JOIN public.gammas ON deltas.data->>'gamma_id' = gammas.data->>'id'
 
-        WHERE id = ANY(ARRAY['1'])
+        WHERE (data->>'id')::text = $1
         GROUP BY alphas.data
         ORDER BY data->>'created_at' DESC NULLS LAST""")
 
@@ -453,7 +454,7 @@ async def test_sql_repository_count_domain(alpha_sql_repository):
         """
         SELECT count(*) as count
         FROM public.alphas
-        WHERE field_1 = ANY(ARRAY['value_3'])
+        WHERE (data->>'field_1')::text = $1
         """)
     args = connection.fetch_args
     assert args == ("value_3",)

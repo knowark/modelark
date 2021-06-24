@@ -3,8 +3,8 @@ from uuid import uuid4
 from collections import defaultdict
 from typing import List, Tuple, Dict, Generic, Union, Any, cast
 from ..common import (
-    T, R, L, Domain, Locator, DefaultLocator,
-    Filterer, DefaultFilterer, Editor, DefaultEditor)
+    T, R, L, Locator, DefaultLocator, Editor, DefaultEditor)
+from ..filterer import Filterer, FunctionParser, Domain
 from .repository import Repository
 
 
@@ -12,10 +12,10 @@ class MemoryRepository(Repository, Generic[T]):
     def __init__(self, filterer: Filterer = None,
                  locator: Locator = None,
                  editor: Editor = None) -> None:
-        self.data: Dict[str, Dict[str, T]] = defaultdict(dict)
-        self.filterer: Filterer = filterer or DefaultFilterer()
+        self.filterer: Filterer = filterer or FunctionParser()
         self.locator: Locator = locator or DefaultLocator()
         self.editor: Editor = editor or DefaultEditor()
+        self.data: Dict[str, Dict[str, T]] = defaultdict(dict)
         self.max_items = 10_000
 
     async def add(self, item: Union[T, List[T]]) -> List[T]:

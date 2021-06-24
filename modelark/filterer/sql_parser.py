@@ -37,7 +37,7 @@ class SqlParser:
               context: Dict[str, Any] = None,
               namespaces: List[str] = [], jsonb_collection=None) -> Tuple:
         if not domain:
-            return "TRUE", ()
+            return "1 = 1", ()
 
         jsonb_collection = jsonb_collection or self.jsonb_collection
         if jsonb_collection:

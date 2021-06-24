@@ -4,8 +4,8 @@ from uuid import uuid4
 from typing import (
     List, Type, Tuple, Mapping, Generic, Callable, Union, overload)
 from ..common import (
-    T, R, L, Domain, Conditioner, DefaultConditioner,
-    Locator, DefaultLocator, Editor, DefaultEditor)
+    T, R, L, Locator, DefaultLocator, Editor, DefaultEditor)
+from ..filterer import Conditioner, SqlParser, SafeEval, Domain
 from ..connector import Connector
 from .repository import Repository
 
@@ -18,14 +18,15 @@ class SqlRepository(Repository, Generic[T]):
                  conditioner: Conditioner = None,
                  locator: Locator = None,
                  editor: Editor = None) -> None:
+        self.max_items = 10_000
+        self.jsonb_field = 'data'
         self.table = table
         self.constructor = constructor
         self.connector = connector
-        self.conditioner = conditioner or DefaultConditioner()
+        self.conditioner = conditioner or SqlParser(
+            jsonb_collection=self.jsonb_field)
         self.locator = locator or DefaultLocator('public')
         self.editor = editor or DefaultEditor()
-        self.max_items = 10_000
-        self.jsonb_field = 'data'
 
     async def add(self, item: Union[T, List[T]]) -> List[T]:
         records = []

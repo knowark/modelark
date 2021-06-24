@@ -4,9 +4,8 @@ from typing import cast, Dict, Any
 from uuid import uuid4
 from typing import (
     List, Type, Tuple, Mapping, Generic, Callable, Union, overload)
-from ..common import (
-    T, R, L, Domain, Conditioner, DefaultConditioner,
-    Locator, DefaultLocator, Editor, DefaultEditor)
+from ..common import T, R, L
+from ..filterer import Domain
 from ..connector import Connector
 from .repository import Repository
 

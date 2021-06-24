@@ -1,5 +1,4 @@
 from typing import Protocol, Callable, Any
-from ..common import Domain
 
 
 class Locator(Protocol):
