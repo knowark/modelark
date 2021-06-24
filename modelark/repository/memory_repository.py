@@ -22,7 +22,6 @@ class MemoryRepository(Repository, Generic[T]):
         items = item if isinstance(item, list) else [item]
 
         for item in items:
-            item.id = item.id or str(uuid4())
             item.updated_at = int(time.time())
             item.updated_by = self.editor.reference
             item.created_at = item.created_at or item.updated_at
