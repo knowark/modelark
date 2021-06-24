@@ -1,9 +1,10 @@
 from typing import TypeVar
+from uuid import uuid4
 
 
 class Entity:
     def __init__(self, **attributes) -> None:
-        self.id = attributes['id']
+        self.id = str(attributes.get('id', uuid4()))
         self.created_at = attributes.get('created_at', 0)
         self.updated_at = attributes.get('updated_at', self.created_at)
         self.created_by = attributes.get('created_by', '')
