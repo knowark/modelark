@@ -2,20 +2,20 @@ from typing import cast
 import unittest
 from fnmatch import fnmatchcase
 from unittest.mock import Mock
+from modelark.filterer import FunctionParser
 from modelark.filterer.types import QueryDomain
 from modelark.filterer.safe_eval import SafeEval
-from modelark.filterer.expression_parser import ExpressionParser
 
 
-class TestExpressionParser(unittest.TestCase):
+class TestFunctionParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = ExpressionParser()
+        self.parser = FunctionParser()
 
-    def test_expression_parser_object_creation(self):
-        self.assertTrue(isinstance(self.parser, ExpressionParser))
+    def test_function_parser_object_creation(self):
+        self.assertTrue(isinstance(self.parser, FunctionParser))
 
-    def test_expression_parser_parse_tuple(self):
+    def test_function_parser_parse_tuple(self):
         filter_tuple_list = [
             (('field', '=', 9), lambda obj: obj.field == 9, Mock(field=9)),
             (('field', '!=', 9), lambda obj: obj.field != 9, Mock(field=8)),
@@ -38,7 +38,7 @@ class TestExpressionParser(unittest.TestCase):
             self.assertEqual(
                 function(mock_object), expected_function(mock_object))
 
-    def test_expression_parser_parse_single_term(self):
+    def test_function_parser_parse_single_term(self):
         domain: QueryDomain = [('field', '=', 7)]
 
         def expected(obj):
@@ -56,7 +56,7 @@ class TestExpressionParser(unittest.TestCase):
         mock_object.field = 5
         self.assertFalse(function(mock_object))
 
-    def test_expression_parser_default_join(self):
+    def test_function_parser_default_join(self):
         stack = [lambda obj: obj.field2 != 8, lambda obj: obj.field == 7]
 
         def expected(obj):
@@ -75,7 +75,7 @@ class TestExpressionParser(unittest.TestCase):
         mock_object.field = 5
         self.assertFalse(result_stack[0](mock_object))
 
-    def test_expression_parser_parse_multiple_terms(self):
+    def test_function_parser_parse_multiple_terms(self):
         test_domains = [
             ([('field', '=', 7), ('field2', '!=', 8)],
              lambda obj: (obj.field2 != 8 and obj.field == 7),
@@ -104,14 +104,14 @@ class TestExpressionParser(unittest.TestCase):
             self.assertTrue(callable(result))
             self.assertEqual(result(obj), expected(obj))
 
-    def test_expression_parser_with_empty_list(self):
+    def test_function_parser_with_empty_list(self):
         domain = []
         result = self.parser.parse(domain)
         mock_object = Mock()
         mock_object.field = 7
         self.assertTrue(result(mock_object))
 
-    def test_expression_parser_with_lists_of_lists(self):
+    def test_function_parser_with_lists_of_lists(self):
         domain = cast(QueryDomain, [['field', '=', 7], ['field2', '!=', 8]])
 
         def expected(obj):
@@ -126,7 +126,7 @@ class TestExpressionParser(unittest.TestCase):
         self.assertTrue(result(mock_object))
         self.assertEqual(result(mock_object), expected(mock_object))
 
-    def test_expression_parser_parse_like(self):
+    def test_function_parser_parse_like(self):
         filter_tuple_list = [
             (('field', 'like', "Hello"),
              lambda obj: fnmatchcase(obj.field, "Hello"),
@@ -161,7 +161,7 @@ class TestExpressionParser(unittest.TestCase):
             self.assertEqual(function(mock_object),
                              expected_function(mock_object))
 
-    def test_expression_parser_parse_contains(self):
+    def test_function_parser_parse_contains(self):
         filter_tuple_list = [
             (('field', 'contains', "333"), lambda obj: '333' in obj.field,
              Mock(field=['1', '22', '333']))]
@@ -177,14 +177,14 @@ class TestExpressionParser(unittest.TestCase):
             self.assertEqual(
                 function(mock_object), expected_function(mock_object))
 
-    def test_expression_parser_parse_evaluator(self):
+    def test_function_parser_parse_evaluator(self):
         self.parser.evaluator = SafeEval()
         domain = [('field', '=', '>>> 3 + 4')]
         result = self.parser.parse(domain)
         mock_object = Mock(field=7)
         self.assertTrue(result(mock_object))
 
-    def test_expression_parser_evaluator_context(self):
+    def test_function_parser_evaluator_context(self):
         self.parser.evaluator = SafeEval()
         domain = [('field', '=', '>>> 3 + value')]
         context = {'value': 4}
@@ -192,7 +192,7 @@ class TestExpressionParser(unittest.TestCase):
         mock_object = Mock(field=7)
         self.assertTrue(result(mock_object))
 
-    def test_expression_parser_namespaces(self):
+    def test_function_parser_namespaces(self):
         namespaces = ['orders', 'customers']
         domain = [('orders.customer_id', '=', 'customers.id')]
 
@@ -204,7 +204,7 @@ class TestExpressionParser(unittest.TestCase):
 
         self.assertTrue(result(mock_object))
 
-    def test_expression_parser_with_dict(self):
+    def test_function_parser_with_dict(self):
         domain = [('field', '=', 7)]
 
         result = self.parser.parse(domain)

@@ -5,7 +5,7 @@ from fnmatch import fnmatchcase
 from .types import TermTuple, QueryDomain
 
 
-class ExpressionParser:
+class FunctionParser:
 
     def __init__(self, evaluator: Callable = lambda x, _: x) -> None:
         self.evaluator = evaluator
