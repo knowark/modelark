@@ -121,3 +121,13 @@ class FunctionParser:
         pattern = pattern.lower() if insensitive else pattern
         value = value.lower() if insensitive else value
         return fnmatchcase(value, pattern)
+
+
+# Compatibility Classes
+
+class QueryParser(FunctionParser):
+    """FunctionParser Alias"""
+
+
+class ExpressionParser(FunctionParser):
+    """FunctionParser Alias"""
