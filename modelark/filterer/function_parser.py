@@ -17,7 +17,7 @@ class FunctionParser:
             '<': operator.lt,
             '>': operator.gt,
             '>=': operator.ge,
-            'in': lambda x, y: x in y,
+            'in': lambda x, y: isinstance(y, list) and x in y,
             'like': lambda x, y: self._parse_like(x, y),
             'ilike': lambda x, y: self._parse_like(x, y, True),
             'contains': operator.contains
