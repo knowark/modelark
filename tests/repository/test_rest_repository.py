@@ -293,7 +293,7 @@ async def test_rest_repository_remove_false(alpha_rest_repository):
 
 async def test_rest_repository_count(alpha_rest_repository):
     connection = alpha_rest_repository.connector.connection
-    connection.fetch_result = [{'Total-Count': 5}]
+    connection.fetch_result = [{'Count': 5}]
 
     count = await alpha_rest_repository.count()
 
@@ -322,7 +322,7 @@ async def test_rest_repository_count_specific_header(alpha_rest_repository):
 
 async def test_rest_repository_count_domain(alpha_rest_repository):
     connection = alpha_rest_repository.connector.connection
-    connection.fetch_result = [{'Total-Count': 1}]
+    connection.fetch_result = [{'Count': 1}]
 
     domain = [('field_1', '=', "value_3")]
     count = await alpha_rest_repository.count(domain)

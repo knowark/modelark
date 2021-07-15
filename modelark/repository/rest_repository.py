@@ -25,13 +25,11 @@ class RestRepository(Repository, Generic[T]):
 
     async def add(self, item: Union[T, List[T]]) -> List[T]:
         items = item if isinstance(item, list) else [item]
-
-        connection = await self.connector.get()
         add_method = self.settings.get('add_method', 'PATCH')
         parameters = {'method': add_method, 'payload': [
             vars(item) for item in items]}
 
-        records = await connection.fetch(self.endpoint, **parameters)
+        records = await self._fetch(**parameters)
 
         if self.constructor:
             records = [self.constructor(**record) for record in records]
@@ -43,8 +41,6 @@ class RestRepository(Repository, Generic[T]):
                      order: str = None) -> List[T]:
 
         filter = json.dumps(domain)
-
-        connection = await self.connector.get()
         parameters: Dict[str, Any] = {'method': 'GET'}
         query_params: Dict[str, str] = {}
 
@@ -61,7 +57,7 @@ class RestRepository(Repository, Generic[T]):
         if query_params:
             parameters['query_params'] = query_params
 
-        records = await connection.fetch(self.endpoint, **parameters)
+        records = await self._fetch(**parameters)
 
         if self.constructor:
             records = [self.constructor(**record) for record in records]
@@ -75,20 +71,17 @@ class RestRepository(Repository, Generic[T]):
         items = item if isinstance(item, list) else [item]
         ids = [getattr(item, 'id') for item in items]
 
-        connection = await self.connector.get()
-
         parameters: Dict[str, Any] = {'method': 'DELETE'}
         if len(items) == 1:
             parameters['path'] = f'/{ids[0]}'
         else:
             parameters['payload'] = ids
 
-        records = await connection.fetch(self.endpoint, **parameters)
+        records = await self._fetch(**parameters)
 
         return True
 
     async def count(self, domain: Domain = None) -> int:
-        connection = await self.connector.get()
         parameters: Dict[str, Any] = {'method': 'HEAD'}
         if domain:
             domain_param = self.settings.get('domain_param', 'filter')
@@ -96,9 +89,11 @@ class RestRepository(Repository, Generic[T]):
                 domain_param: json.dumps(domain)
             }
 
-        result: Mapping = next(iter(
-            await connection.fetch(self.endpoint, **parameters)), {})
-
-        count_header = self.settings.get('count_header', 'Total-Count')
+        result: Mapping = next(iter(await self._fetch(**parameters)), {})
+        count_header = self.settings.get('count_header', 'Count')
 
         return result.get(count_header, 0)
+
+    async def _fetch(self, **parameters) -> List[Mapping]:
+        connection = await self.connector.get()
+        return await connection.fetch(self.endpoint, **parameters)
