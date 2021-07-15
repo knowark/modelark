@@ -194,7 +194,7 @@ async def test_rest_repository_add(alpha_rest_repository) -> None:
         "https://service.example.com/alphas")
 
     kwargs = connection.fetch_kwargs
-    assert kwargs['method'] == 'PUT'
+    assert kwargs['method'] == 'PATCH'
     assert kwargs['payload'][0]['id'] == "4"
     assert kwargs['payload'][0]['field_1'] == "value_1"
 
@@ -212,7 +212,7 @@ async def test_rest_repository_add_no_constructor(alpha_rest_repository):
         "https://service.example.com/alphas")
 
     kwargs = connection.fetch_kwargs
-    assert kwargs['method'] == 'PUT'
+    assert kwargs['method'] == 'PATCH'
     assert kwargs['payload'][0]['id'] == "4"
     assert kwargs['payload'][0]['field_1'] == "value_1"
 
@@ -231,7 +231,7 @@ async def test_rest_repository_add_multiple(alpha_rest_repository):
         "https://service.example.com/alphas")
 
     kwargs = connection.fetch_kwargs
-    assert kwargs['method'] == 'PUT'
+    assert kwargs['method'] == 'PATCH'
     assert kwargs['payload'][0]['id'] == "1"
     assert kwargs['payload'][0]['field_1'] == "value_1"
     assert kwargs['payload'][1]['id'] == "2"
