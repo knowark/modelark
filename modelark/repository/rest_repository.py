@@ -26,8 +26,8 @@ class RestRepository(Repository, Generic[T]):
     async def add(self, item: Union[T, List[T]]) -> List[T]:
         items = item if isinstance(item, list) else [item]
         add_method = self.settings.get('add_method', 'PATCH')
-        parameters = {'method': add_method, 'payload': [
-            vars(item) for item in items]}
+        parameters = {'method': add_method, 'payload': {'data': [
+            vars(item) for item in items]}}
 
         records = await self._fetch(**parameters)
 
@@ -75,7 +75,7 @@ class RestRepository(Repository, Generic[T]):
         if len(items) == 1:
             parameters['path'] = f'/{ids[0]}'
         else:
-            parameters['payload'] = ids
+            parameters['payload'] = {'data': ids}
 
         records = await self._fetch(**parameters)
 

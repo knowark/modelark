@@ -1,32 +1,13 @@
-from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Tuple, Type, List, Generic, Union, Optional, overload
-from ..common import T, R, L
+from typing import Tuple, Type, List, Generic, Union
 from ..filterer import Domain
+from .interface import RepositoryInterface, T, R, L
 
 
-class Repository(ABC, Generic[T]):
+class Repository(RepositoryInterface, Generic[T]):
     @property
     def model(self) -> Type[T]:
         raise NotImplementedError('Provide the repository model')
-
-    @abstractmethod
-    async def add(self, item: Union[T, List[T]]) -> List[T]:
-        "Add method to be implemented."
-
-    @abstractmethod
-    async def remove(self, item: Union[T, List[T]]) -> bool:
-        "Remove method to be implemented."
-
-    @abstractmethod
-    async def count(self, domain: Domain = None) -> int:
-        "Count items matching a query domain"
-
-    @abstractmethod
-    async def search(self, domain: Domain,
-                     limit: int = None, offset: int = None,
-                     order: str = None) -> List[T]:
-        """Standard search method"""
 
     async def join(
             self, domain: Domain,
