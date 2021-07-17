@@ -189,14 +189,28 @@ async def test_rest_repository_add(alpha_rest_repository) -> None:
     await alpha_rest_repository.add(item)
 
     connection = alpha_rest_repository.connector.connection
-
+    kwargs = connection.fetch_kwargs
     assert connection.fetch_query == (
         "https://service.example.com/alphas")
-
-    kwargs = connection.fetch_kwargs
     assert kwargs['method'] == 'PATCH'
     assert kwargs['payload']['data'][0]['id'] == "4"
     assert kwargs['payload']['data'][0]['field_1'] == "value_1"
+
+
+async def test_rest_repository_add_with_meta(alpha_rest_repository) -> None:
+    item = Alpha(id="4", field_1="value_1")
+
+    with alpha_rest_repository.meta({'context': 'metadata'}):
+        await alpha_rest_repository.add(item)
+
+    connection = alpha_rest_repository.connector.connection
+    kwargs = connection.fetch_kwargs
+    assert connection.fetch_query == (
+        "https://service.example.com/alphas")
+    assert kwargs['method'] == 'PATCH'
+    assert kwargs['payload']['data'][0]['id'] == "4"
+    assert kwargs['payload']['data'][0]['field_1'] == "value_1"
+    assert kwargs['payload']['meta'] == {'context': 'metadata'}
 
 
 async def test_rest_repository_add_no_constructor(alpha_rest_repository):
@@ -271,6 +285,28 @@ async def test_rest_repository_remove_true_multiple(alpha_rest_repository):
     kwargs = connection.fetch_kwargs
     assert kwargs['method'] == 'DELETE'
     assert kwargs['payload']['data'] == ["5", "6"]
+    assert kwargs.get('path') is None
+
+    assert deleted is True
+
+
+async def test_rest_repository_remove_with_meta(alpha_rest_repository):
+    items = [
+        Alpha(id="5", field_1="value_5"),
+        Alpha(id="6", field_1="value_6")
+    ]
+
+    connection = alpha_rest_repository.connector.connection
+
+    with alpha_rest_repository.meta({'context': 'metadata'}):
+        deleted = await alpha_rest_repository.remove(items)
+
+    kwargs = connection.fetch_kwargs
+    assert connection.fetch_query == (
+        "https://service.example.com/alphas")
+    assert kwargs['method'] == 'DELETE'
+    assert kwargs['payload']['data'] == ["5", "6"]
+    assert kwargs['payload']['meta'] == {'context': 'metadata'}
     assert kwargs.get('path') is None
 
     assert deleted is True

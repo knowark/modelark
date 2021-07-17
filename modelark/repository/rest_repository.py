@@ -26,8 +26,11 @@ class RestRepository(Repository, Generic[T]):
     async def add(self, item: Union[T, List[T]]) -> List[T]:
         items = item if isinstance(item, list) else [item]
         add_method = self.settings.get('add_method', 'PATCH')
-        parameters = {'method': add_method, 'payload': {'data': [
-            vars(item) for item in items]}}
+        payload = {'data': [vars(item) for item in items]}
+        if self.context.get():
+            payload['meta'] = self.context.get()
+
+        parameters = {'method': add_method, 'payload': payload}
 
         records = await self._fetch(**parameters)
 
@@ -72,10 +75,13 @@ class RestRepository(Repository, Generic[T]):
         ids = [getattr(item, 'id') for item in items]
 
         parameters: Dict[str, Any] = {'method': 'DELETE'}
-        if len(items) == 1:
+        if len(items) == 1 and not self.context.get():
             parameters['path'] = f'/{ids[0]}'
         else:
-            parameters['payload'] = {'data': ids}
+            payload = {'data': ids}
+            if self.context.get():
+                payload['meta'] = self.context.get()
+            parameters['payload'] = payload
 
         records = await self._fetch(**parameters)
 

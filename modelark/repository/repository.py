@@ -6,9 +6,12 @@ from .interface import RepositoryInterface, T, R, L
 
 
 class Repository(RepositoryInterface, Generic[T]):
+
+    context: ContextVar
+
     def __init_subclass__(cls, **kwargs) -> None:
-        setattr(cls, 'context', ContextVar(
-            f'{cls.__name__}Context', default={}))
+        cls.context = ContextVar(
+            f'{cls.__name__}Context', default={})
 
     @property
     def model(self) -> Type[T]:
