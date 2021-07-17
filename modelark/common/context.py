@@ -11,7 +11,10 @@ class MetaContext:
         return self
 
     def __exit__(self, type, value, traceback):
-        self.context.reset(self.token)
+        self.clear()
 
     def __getattr__(self, name):
         return getattr(self.context, name)
+
+    def clear(self):
+        self.context.reset(self.token)
