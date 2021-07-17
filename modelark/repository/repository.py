@@ -1,18 +1,22 @@
-import contextvars
 from collections import defaultdict
-from typing import Tuple, Type, List, Generic, Union
+from typing import Tuple, Dict, Type, List, Generic, Union
+from ..common import ContextVar, MetaContext
 from ..filterer import Domain
 from .interface import RepositoryInterface, T, R, L
 
 
 class Repository(RepositoryInterface, Generic[T]):
     def __init_subclass__(cls, **kwargs) -> None:
-        setattr(cls, 'context', contextvars.ContextVar(
+        setattr(cls, 'context', ContextVar(
             f'{cls.__name__}Context', default={}))
 
     @property
     def model(self) -> Type[T]:
         raise NotImplementedError('Provide the repository model')
+
+    def meta(self, value: Dict) -> MetaContext:
+        context = getattr(self, 'context')
+        return MetaContext(context, value)
 
     async def join(
             self, domain: Domain,

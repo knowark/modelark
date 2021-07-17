@@ -1,6 +1,9 @@
 import contextvars
-from pytest import fixture
+from pytest import fixture, mark
 from modelark.repository import Repository
+
+
+pytestmark = mark.asyncio
 
 
 def test_repository_interface_methods():
@@ -44,3 +47,12 @@ def test_repository_context_definition():
 
     value = concrete_repository.context.get()
     assert value == {}
+
+
+async def test_repository_meta():
+    concrete_repository = ConcreteRepository()
+
+    with concrete_repository.meta({'extra': 'data'}) as context:
+        assert context.get() == {'extra': 'data'}
+
+    assert context.get() == {}
