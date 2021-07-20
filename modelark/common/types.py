@@ -1,5 +1,7 @@
-from typing import List, MutableMapping, Any
+from typing import List, MutableMapping, Union, Any
 
+
+Scalar = Union[int, float, str, bool]
 
 DataDict = MutableMapping[str, Any]
 
