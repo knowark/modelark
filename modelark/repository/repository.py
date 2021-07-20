@@ -23,13 +23,14 @@ class Repository(RepositoryInterface, Generic[T]):
 
     async def find(
             self, records: List[Union[Scalar, DataDict]], field='id'
-    ) -> List[Optional[T]]:
-        values = [record.get(field) if isinstance(record, dict)
-                  else record for record in records]
+    ) -> List[T]:
+        records = [record if isinstance(record, dict)
+                   else {field: record} for record in records]
         index = {getattr(item, field): item for item in await self.search(
-            [(field, 'in', values)])}
+            [(field, 'in', [record.get(field) for record in records])])}
 
-        return [index.get(value) for value in values]
+        return [index.get(record.get(field), self.model(**record))
+                for record in records]
 
     async def join(
             self, domain: Domain,

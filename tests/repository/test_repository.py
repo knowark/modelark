@@ -26,6 +26,9 @@ class ConcreteEntity(Entity):
 
 
 class ConcreteRepository(Repository):
+
+    model = ConcreteEntity
+
     def __init__(self, **kwargs) -> None:
         self.search_result = kwargs.get('search_result', [])
 
@@ -112,7 +115,10 @@ async def test_repository_find_list_of_dicts_missing():
 
     found = await concrete_repository.find(records)
 
-    assert found == [None, items[2], None]
+    assert len(found) == 3
+    assert isinstance(found[0], ConcreteEntity) and found[0].id == 'C999'
+    assert found[1] == items[2]
+    assert isinstance(found[2], ConcreteEntity) and found[2].name == 'John'
     assert concrete_repository.search_arguments == [
         [('id', 'in', ['C999', 'C003', None])], None, None, None]
 
@@ -121,13 +127,18 @@ async def test_repository_find_by_field():
     items = [
         ConcreteEntity(id='C001', name='John'),
         ConcreteEntity(id='C002', name='Bob'),
-        ConcreteEntity(id='C003')
+        ConcreteEntity(id='C003', name='Alice')
     ]
     concrete_repository = ConcreteRepository(search_result=items)
-    records = [{'id': 'C999'}, {'id': 'C003'}, {'name': 'John'}]
+    records = [{'id': 'C999'}, {'id': 'C003'}, 'John']
 
     found = await concrete_repository.find(records, 'name')
 
-    assert found == [None, None, items[0]]
+    assert len(found) == 3
+    assert (isinstance(found[0], ConcreteEntity)
+            and found[0].id == 'C999' and found[0].name == '')
+    assert (isinstance(found[1], ConcreteEntity)
+            and found[1].id == 'C003' and found[1].name == '')
+    assert found[2] == items[0]
     assert concrete_repository.search_arguments == [
         [('name', 'in', [None, None, 'John'])], None, None, None]
