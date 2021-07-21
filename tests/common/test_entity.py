@@ -16,6 +16,7 @@ def test_entity_instantiation(entity):
 
 def test_entity_attributes(entity):
     assert entity.id == '1'
+    assert entity.status == ''
     assert entity.created_at == 0
     assert entity.updated_at == 0
     assert entity.created_by == ''
@@ -26,3 +27,12 @@ def test_entity_default_id():
     entity = Entity()
     uuid_object = UUID(entity.id, version=4)
     assert entity.id == str(uuid_object)
+
+
+def test_entity_transition():
+    entity = Entity()
+    state = {}
+
+    result = entity.transition(state)
+
+    assert result is entity

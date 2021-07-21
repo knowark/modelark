@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import Tuple, Dict, Type, List, Generic, Union, Optional
-from ..common import ContextVar, MetaContext, Scalar, DataDict
+from ..common import ContextVar, MetaContext, Value
 from ..filterer import Domain
 from .interface import RepositoryInterface, T, R, L
 
@@ -21,11 +21,9 @@ class Repository(RepositoryInterface, Generic[T]):
         context = getattr(self, 'context')
         return MetaContext(context, value)
 
-    async def find(
-            self, records: List[Union[Scalar, DataDict]], field='id'
-    ) -> List[T]:
-        records = [record if isinstance(record, dict)
-                   else {field: record} for record in records]
+    async def find(self, values: List[Value], field='id') -> List[T]:
+        records = [value if isinstance(value, dict)
+                   else {field: value} for value in values]
         index = {getattr(item, field): item for item in await self.search(
             [(field, 'in', [record.get(field) for record in records])])}
 
