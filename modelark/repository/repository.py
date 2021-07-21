@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Tuple, Dict, Type, List, Generic, Union, Optional
+from typing import (
+    Tuple, Dict, Type, List, Generic, Union, Optional, Literal, overload)
 from ..common import ContextVar, MetaContext, Value
 from ..filterer import Domain
 from .interface import RepositoryInterface, T, R, L
@@ -20,15 +21,6 @@ class Repository(RepositoryInterface, Generic[T]):
     def meta(self, value: Dict) -> MetaContext:
         context = getattr(self, 'context')
         return MetaContext(context, value)
-
-    async def find(self, values: List[Value], field='id') -> List[T]:
-        records = [value if isinstance(value, dict)
-                   else {field: value} for value in values]
-        index = {getattr(item, field): item for item in await self.search(
-            [(field, 'in', [record.get(field) for record in records])])}
-
-        return [index.get(record.get(field), self.model(**record))
-                for record in records]
 
     async def join(
             self, domain: Domain,
@@ -69,3 +61,26 @@ class Repository(RepositoryInterface, Generic[T]):
             field, key = source, 'id'
 
         return [(item, relation_map[getattr(item, key)]) for item in items]
+
+    @overload
+    async def find(
+        self, values: List[Value], field: str = 'id', *,  init: Literal[True]
+    ) -> List[T]:
+        """Find or initialize items if missing"""
+
+    @overload
+    async def find(
+        self, values: List[Value], field: str = 'id'
+    ) -> List[Optional[T]]:
+        """Find items or return a None value if missing"""
+
+    async def find(
+        self, values: List[Value], field: str = 'id', *, init: bool = False
+    ) -> Union[List[Optional[T]], List[T]]:
+        records = [value if isinstance(value, dict)
+                   else {field: value} for value in values]
+        index = {getattr(item, field): item for item in await self.search(
+            [(field, 'in', [record.get(field) for record in records])])}
+
+        return [index.get(record.get(field), init and self.model(
+            **record) or None) for record in records]

@@ -115,6 +115,22 @@ async def test_repository_find_list_of_dicts_missing():
 
     found = await concrete_repository.find(records)
 
+    assert found == [None, items[2], None]
+    assert concrete_repository.search_arguments == [
+        [('id', 'in', ['C999', 'C003', None])], None, None, None]
+
+
+async def test_repository_find_list_of_dicts_missing_init():
+    items = [
+        ConcreteEntity(id='C001'),
+        ConcreteEntity(id='C002'),
+        ConcreteEntity(id='C003')
+    ]
+    concrete_repository = ConcreteRepository(search_result=items)
+    records = [{'id': 'C999'}, {'id': 'C003'}, {'name': 'John'}]
+
+    found = await concrete_repository.find(records, init=True)
+
     assert len(found) == 3
     assert isinstance(found[0], ConcreteEntity) and found[0].id == 'C999'
     assert found[1] == items[2]
@@ -132,7 +148,7 @@ async def test_repository_find_by_field():
     concrete_repository = ConcreteRepository(search_result=items)
     records = [{'id': 'C999'}, {'id': 'C003'}, 'John']
 
-    found = await concrete_repository.find(records, 'name')
+    found = await concrete_repository.find(records, 'name', init=True)
 
     assert len(found) == 3
     assert (isinstance(found[0], ConcreteEntity)
