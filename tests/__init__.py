@@ -8,8 +8,9 @@ expected = {
     'DataDict', 'DefaultEditor', 'DefaultLocator', 'Domain',
     'Entity', 'ExpressionParser', 'FunctionParser', 'JsonRepository',
     'MemoryRepository', 'QueryDomain', 'QueryParser', 'RecordList',
-    'Repository', 'RestRepository', 'SafeEval', 'SqlParser',
-    'SqlRepository', 'common', 'connector', 'filterer', 'repository'}
+    'Repository', 'RepositoryResolver', 'RestRepository', 'SafeEval',
+    'SqlParser', 'SqlRepository', 'common', 'connector', 'filterer',
+    'repository'}
 
 assert exports == expected, (
     f'Extra: {exports - expected} | Missing: {expected - exports}')

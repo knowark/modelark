@@ -26,7 +26,6 @@ class ConcreteEntity(Entity):
 
 
 class ConcreteRepository(Repository):
-
     model = ConcreteEntity
 
     def __init__(self, **kwargs) -> None:

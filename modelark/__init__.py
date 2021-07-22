@@ -5,7 +5,7 @@ from .filterer import (
     Domain, QueryDomain, SafeEval, FunctionParser,
     ExpressionParser, QueryParser, SqlParser)
 from .repository import (
-    Repository, MemoryRepository,
+    Repository, RepositoryResolver, MemoryRepository,
     JsonRepository, SqlRepository, RestRepository)
 
 
