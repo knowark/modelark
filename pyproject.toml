@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "modelark"
-version = "0.6.2"
+version = "0.6.3"
 description = "Models Definition and Management Library"
 authors = ["Knowark"]
 license = "MIT"
