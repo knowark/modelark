@@ -88,6 +88,23 @@ async def test_repository_find_list_scalar():
         [('id', 'in', ['C002', 'C003'])], None, None, None]
 
 
+async def test_repository_single_argument():
+    items = [
+        ConcreteEntity(id='C001'),
+        ConcreteEntity(id='C002'),
+        ConcreteEntity(id='C003')
+    ]
+    concrete_repository = ConcreteRepository(search_result=items)
+    record = 'C002'
+
+    found = await concrete_repository.find(record)
+
+    assert found == [items[1]]
+    assert isinstance(found, list)
+    assert concrete_repository.search_arguments == [
+        [('id', 'in', ['C002'])], None, None, None]
+
+
 async def test_repository_find_list_of_dicts():
     items = [
         ConcreteEntity(id='C001'),

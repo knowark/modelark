@@ -64,19 +64,25 @@ class Repository(RepositoryInterface, Generic[T]):
 
     @overload
     async def find(
-        self, values: List[Value], field: str = 'id', *,  init: Literal[True]
+        self, values: Union[Value, List[Value]], field: str = 'id', *,
+        init: Literal[True]
     ) -> List[T]:
         """Find or initialize items if missing"""
 
     @overload
     async def find(
-        self, values: List[Value], field: str = 'id'
+        self, values: Union[Value, List[Value]], field: str = 'id'
     ) -> List[Optional[T]]:
         """Find items or return a None value if missing"""
 
     async def find(
-        self, values: List[Value], field: str = 'id', *, init: bool = False
+        self, values: Union[Value, List[Value]], field: str = 'id', *,
+        init: bool = False
     ) -> Union[List[Optional[T]], List[T]]:
+
+        if not isinstance(values, list):
+            values = [values]
+
         records = [value if isinstance(value, dict)
                    else {field: value} for value in values]
         index = {getattr(item, field): item for item in await self.search(
