@@ -12,6 +12,7 @@ class Entity:
         self.updated_by = attributes.get('updated_by', self.created_by)
 
     def transition(self: 'T', state: Dict[str, Any]) -> 'T':
+        state.pop('id', None)
         self.__dict__.update(state)
         return self
 
