@@ -2,11 +2,10 @@ import os
 import time
 import json
 import fcntl
+from uuid import uuid4
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
-from json import loads, load, dump, dumps
-from uuid import uuid4
 from typing import Dict, List, Tuple, Any, Callable, Generic, Union, cast
 from ..common import (
     T, R, L, Locator, DefaultLocator, Editor, DefaultEditor)
@@ -42,7 +41,7 @@ class JsonRepository(Repository, Generic[T]):
 
         data: Dict[str, Any] = defaultdict(lambda: {})
         with locked_open(str(self.file_path), 'r+') as f:
-            data.update(loads(f.read()))
+            data.update(json.loads(f.read()))
 
             for item in items:
                 item.updated_at = int(time.time())
@@ -53,7 +52,7 @@ class JsonRepository(Repository, Generic[T]):
                 data[self.collection][item.id] = vars(item)
 
             f.seek(f.truncate(0))
-            f.write(dumps(data, indent=2))
+            f.write(json.dumps(data, indent=2))
 
         return items
 
@@ -100,22 +99,24 @@ class JsonRepository(Repository, Generic[T]):
         if not self.file_path.exists():
             return items
 
-        with self.file_path.open('r') as f:
-            data = load(f)
+        with locked_open(str(self.file_path), 'r') as f:
+            data = json.loads(f.read())
             items_dict = data.get(self.collection, {})
 
-        filter_function = self.filterer.parse(domain)
-        for item_dict in items_dict.values():
-            item = self.constructor(**item_dict)
+            filter_function = self.filterer.parse(domain)
+            for item_dict in items_dict.values():
+                item = self.constructor(**item_dict)
 
-            if filter_function(item):
-                items.append(item)
+                if filter_function(item):
+                    items.append(item)
 
-        if offset is not None:
-            items = items[offset:]
-        if limit is not None:
-            items = items[:limit]
-        if order:
+            if offset is not None:
+                items = items[offset:]
+            if limit is not None:
+                items = items[:limit]
+            if not order:
+                return items
+
             fields = order.lower().split(',')
             for field in reversed(fields):
                 key, *direction = field.split()
@@ -123,7 +124,7 @@ class JsonRepository(Repository, Generic[T]):
                     items, key=lambda item: getattr(item, key),
                     reverse=('desc' in direction)))
 
-        return items
+            return items
 
     @property
     def file_path(self) -> Path:
