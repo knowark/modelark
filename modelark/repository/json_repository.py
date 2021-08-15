@@ -1,7 +1,10 @@
+import os
 import time
+import fcntl
 from pathlib import Path
 from collections import defaultdict
-from json import loads, load, dump
+from contextlib import contextmanager
+from json import loads, load, dump, dumps
 from uuid import uuid4
 from typing import Dict, List, Tuple, Any, Callable, Generic, Union, cast
 from ..common import (
@@ -25,25 +28,31 @@ class JsonRepository(Repository, Generic[T]):
         self.locator = locator or DefaultLocator()
         self.editor = editor or DefaultEditor()
 
+    async def setup(self) -> None:
+        if not self.file_path.exists():
+            self.file_path.parent.mkdir(parents=True, exist_ok=True)
+            with locked_open(str(self.file_path), 'w') as f:
+                f.write("{}")
+
     async def add(self, item: Union[T, List[T]]) -> List[T]:
+        await self.setup()
 
         items = item if isinstance(item, list) else [item]
 
         data: Dict[str, Any] = defaultdict(lambda: {})
-        if self.file_path.exists():
-            data.update(loads(self.file_path.read_text()))
+        with locked_open(str(self.file_path), 'r+') as f:
+            data.update(loads(f.read()))
 
-        for item in items:
-            item.updated_at = int(time.time())
-            item.updated_by = self.editor.reference
-            item.created_at = item.created_at or item.updated_at
-            item.created_by = item.created_by or item.updated_by
+            for item in items:
+                item.updated_at = int(time.time())
+                item.updated_by = self.editor.reference
+                item.created_at = item.created_at or item.updated_at
+                item.created_by = item.created_by or item.updated_by
 
-            data[self.collection][item.id] = vars(item)
+                data[self.collection][item.id] = vars(item)
 
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.file_path.open('w') as f:
-            dump(data, f, indent=2)
+            f.seek(f.truncate(0))
+            f.write(dumps(data, indent=2))
 
         return items
 
@@ -120,3 +129,11 @@ class JsonRepository(Repository, Generic[T]):
     def file_path(self) -> Path:
         return (Path(self.data_path) / self.locator.zone /
                 self.locator.location / f"{self.collection}.json")
+
+
+@contextmanager
+def locked_open(filename, mode='r'):
+    with open(filename, mode) as file:
+        fcntl.flock(file, fcntl.LOCK_EX)
+        yield file
+        fcntl.flock(file, fcntl.LOCK_UN)
