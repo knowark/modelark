@@ -80,19 +80,18 @@ class JsonRepository(Repository, Generic[T]):
         if not self.file_path.exists():
             return 0
 
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        with locked_open(str(self.file_path), 'r') as f:
+            data = json.loads(f.read())
 
-        with self.file_path.open('r') as f:
-            data = load(f)
+            count = 0
+            domain = domain or []
+            filter_function = self.filterer.parse(domain)
+            for item_dict in list(data[self.collection].values()):
+                item = self.constructor(**item_dict)
+                if filter_function(item):
+                    count += 1
 
-        count = 0
-        domain = domain or []
-        filter_function = self.filterer.parse(domain)
-        for item_dict in list(data[self.collection].values()):
-            item = self.constructor(**item_dict)
-            if filter_function(item):
-                count += 1
-        return count
+            return count
 
     async def search(self, domain: Domain,
                      limit: int = None, offset: int = None,
