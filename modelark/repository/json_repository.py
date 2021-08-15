@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import fcntl
 from pathlib import Path
 from collections import defaultdict
@@ -57,21 +58,21 @@ class JsonRepository(Repository, Generic[T]):
         return items
 
     async def remove(self, item: Union[T, List[T]]) -> bool:
-
-        items = item if isinstance(item, list) else [item]
         if not self.file_path.exists():
             return False
 
-        with self.file_path.open('r') as f:
-            data = load(f)
+        items = item if isinstance(item, list) else [item]
 
-        deleted = False
-        for item in items:
-            deleted_item = data[self.collection].pop(item.id, None)
-            deleted = bool(deleted_item) or deleted
+        with locked_open(str(self.file_path), 'r+') as f:
+            data = json.loads(f.read())
 
-        with self.file_path.open('w') as f:
-            dump(data, f, indent=2)
+            deleted = False
+            for item in items:
+                deleted_item = data[self.collection].pop(item.id, None)
+                deleted = bool(deleted_item) or deleted
+
+            f.seek(f.truncate(0))
+            f.write(json.dumps(data, indent=2))
 
         return deleted
 
